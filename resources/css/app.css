@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components{
+    .sidebar-list-item{
+        @apply col-span-6 transition-all ease-linear hover:bg-orange-100 rounded-lg py-5 px-2;
+    }
+    .sidebar-list-link{
+        @apply flex flex-col justify-center items-center;
+    }
+    .category-item{
+        @apply bg-orange-100 transition-all ease-linear hover:bg-orange-300 text-center p-4 rounded-lg cursor-pointer;
+    }
+}
