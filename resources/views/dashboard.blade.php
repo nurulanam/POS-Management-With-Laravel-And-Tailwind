@@ -11,6 +11,7 @@
 </head>
 
 <body class="">
+{{-- nav start  --}}
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
@@ -76,6 +77,7 @@
         </div>
     </nav>
 
+    {{-- sidebar start --}}
     <aside id="logo-sidebar"
         class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
         aria-label="Sidebar">
@@ -142,7 +144,8 @@
 
     <div class="p-4 sm:ml-64 dark:bg-slate-700">
         <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-orange-100 mt-14">
-            <div class="grid grid-cols-12 gap-4 min-h-[87vh]">
+            <div class="grid grid-cols-12 gap-4 min-h-[88vh]">
+                {{-- main-content start  --}}
                 <div class="col-span-12 lg:col-span-8 bg-orange-50 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
                     <form id="topSearch">
                         <label for="default-search"
@@ -186,8 +189,14 @@
                           </div>
                     </div>
                 </div>
+                {{-- cart start  --}}
                 <div class="col-span-12 lg:col-span-4 bg-orange-100 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
-
+                    <h2 class="text-gray-800 dark:text-orange-100 text-xl font-medium border pb-3 border-orange-300 dark:border-gray-500 border-t-0 border-l-0 border-r-0 border-b-[1] ">Current Sale</h2>
+                    <div class="cart-info">
+                        <div class="sub-total gird grid-cols-12">
+                            
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
