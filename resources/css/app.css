@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base{
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        @apply bg-orange-400 rounded-lg
+    }
+    ::-webkit-scrollbar-track {
+        @apply bg-orange-50
+    }
+}
+
 @layer components{
     .sidebar-list-item{
         @apply col-span-6 transition-all ease-linear hover:bg-orange-100 rounded-lg py-5 px-2;
@@ -13,3 +25,4 @@
         @apply bg-orange-100 transition-all ease-linear hover:bg-orange-300 text-center p-4 rounded-lg cursor-pointer;
     }
 }
+

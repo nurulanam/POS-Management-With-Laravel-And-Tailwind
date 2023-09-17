@@ -190,11 +190,88 @@
                     </div>
                 </div>
                 {{-- cart start  --}}
-                <div class="col-span-12 lg:col-span-4 bg-orange-100 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
-                    <h2 class="text-gray-800 dark:text-orange-100 text-xl font-medium border pb-3 border-orange-300 dark:border-gray-500 border-t-0 border-l-0 border-r-0 border-b-[1] ">Current Sale</h2>
+                <div class="col-span-12 lg:col-span-4 flex flex-col justify-between bg-orange-50 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
+                    <div class="cart-details">
+                        <h2 class="text-gray-800 dark:text-orange-100 text-xl font-medium border pb-3 border-orange-200 dark:border-gray-500 border-t-0 border-l-0 border-r-0 border-b-[1] ">Current Sale</h2>
+                        {{-- cart products --}}
+                        <div class="cart-products flex flex-col gap-2 mt-4">
+                            <div class="grid grid-cols-12 gap-2 items-center text-gray-800 pb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                                <div class="col-span-2 productSerial dark:text-orange-50">
+                                    1
+                                </div>
+                                <div class="col-span-6 dark:text-orange-50">
+                                    Salmon
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" min="1" class="quantity w-full rounded-lg dark:bg-orange-100 border-orange-200 focus:border-orange-200 focus:ring-orange-200 dark:border-gray-500 dark:focus:border-gray-500 dark:focus:ring-gray-500" placeholder="Quantity">
+                                </div>
+                                <div class="col-span-2 text-end">
+                                    <button class="bg-red-500 hover:bg-red-600 w-full text-orange-50 flex justify-center p-3 rounded-lg transition-all ease-linear">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512" fill="#fff"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center text-gray-800 pb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                                <div class="col-span-2 productSerial dark:text-orange-50">
+                                    2
+                                </div>
+                                <div class="col-span-6 dark:text-orange-50">
+                                    Potato
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" min="1" class="quantity w-full rounded-lg dark:bg-orange-100 border-orange-200 focus:border-orange-200 focus:ring-orange-200 dark:border-gray-500 dark:focus:border-gray-500 dark:focus:ring-gray-500" placeholder="Quantity">
+                                </div>
+                                <div class="col-span-2 text-end">
+                                    <button class="bg-red-500 hover:bg-red-600 w-full text-orange-50 flex justify-center p-3 rounded-lg transition-all ease-linear">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512" fill="#fff"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center text-gray-800 pb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                                <div class="col-span-2 productSerial dark:text-orange-50">
+                                    3
+                                </div>
+                                <div class="col-span-6 dark:text-orange-50">
+                                    Cabbage
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" min="1" class="quantity w-full rounded-lg dark:bg-orange-100 border-orange-200 focus:border-orange-200 focus:ring-orange-200 dark:border-gray-500 dark:focus:border-gray-500 dark:focus:ring-gray-500" placeholder="Quantity">
+                                </div>
+                                <div class="col-span-2 text-end">
+                                    <button class="bg-red-500 hover:bg-red-600 w-full text-orange-50 flex justify-center p-3 rounded-lg transition-all ease-linear">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512" fill="#fff"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- cart info   --}}
                     <div class="cart-info">
-                        <div class="sub-total gird grid-cols-12">
-                            
+                        <div class="total-quantity grid grid-cols-12 items-center gap-4 text-gray-800 dark:text-orange-50 pb-2 mb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                            <div class="col-span-6">Total Quantity:</div>
+                            <div class="col-span-6 text-end" id="totalQuantity">5</div>
+                        </div>
+                        <div class="sub-total grid grid-cols-12 items-center gap-4 text-gray-800 dark:text-orange-50 pb-2 mb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                            <div class="col-span-6">Sub Total:</div>
+                            <div class="col-span-6 text-end"><span id="subTotalPrice">500</span>$</div>
+                        </div>
+                        <div class="discount grid grid-cols-12 items-center gap-4 text-gray-800 dark:text-orange-50 pb-2 mb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                            <div class="col-span-6">Discount:</div>
+                            <div class="col-span-6 text-end flex items-center justify-end gap-3">
+                                <input type="number" min="0" class="w-3/4 rounded-lg dark:bg-orange-100 border-orange-200 focus:border-orange-200 focus:ring-orange-200 dark:border-gray-500 dark:focus:border-gray-500 dark:focus:ring-gray-500" id="discountPrice" placeholder="Percentage">
+                                <select name="discountType" class="rounded-lg text-gray-800 dark:bg-orange-100 border-orange-200 focus:border-orange-200 focus:ring-orange-200 dark:border-gray-500 dark:focus:border-gray-500 dark:focus:ring-gray-500" id="discountType">
+                                    <option class="border-orange-200" value="pers" selected>%</option>
+                                    <option class="border-orange-200" value="doller">$</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="total grid grid-cols-12 items-center gap-4 text-gray-800 dark:text-orange-50 pb-2 mb-2 border-b-[1px] border-orange-200 dark:border-gray-500">
+                            <div class="col-span-6">Total:</div>
+                            <div class="col-span-6 text-end"><span id="totalPrice">450</span>$</div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 pt-2">
+                            <button class="bg-red-500 hover:bg-red-600 w-1/2 text-orange-50 px-4 py-2 rounded-lg transition-all ease-linear">Cancel Order</button>
+                            <button class="bg-green-500 hover:bg-green-600 w-1/2 text-orange-50 px-4 py-2 rounded-lg transition-all ease-linear">Place Order</button>
                         </div>
                     </div>
                 </div>
