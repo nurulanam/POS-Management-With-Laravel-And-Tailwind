@@ -18,7 +18,7 @@
                 <div class="flex items-center justify-start">
                     <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar"
                         aria-controls="logo-sidebar" type="button"
-                        class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+                        class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg xl:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
                         <span class="sr-only">Open sidebar</span>
                         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
@@ -79,7 +79,7 @@
 
     {{-- sidebar start --}}
     <aside id="logo-sidebar"
-        class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+        class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 xl:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
         aria-label="Sidebar">
         <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
             <ul class="grid grid-cols-12 gap-3">
@@ -142,11 +142,11 @@
         </div>
     </aside>
 
-    <div class="p-4 sm:ml-64 dark:bg-slate-700">
+    <div class="p-4 xl:ml-64 dark:bg-slate-700">
         <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-orange-100 mt-14">
             <div class="grid grid-cols-12 gap-4 min-h-[88vh]">
                 {{-- main-content start  --}}
-                <div class="col-span-12 xl:col-span-8 bg-orange-50 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
+                <div class="col-span-12 lg:col-span-8 bg-orange-50 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
                     <form id="topSearch">
                         <label for="default-search"
                             class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
@@ -190,7 +190,7 @@
                     </div>
                 </div>
                 {{-- cart start  --}}
-                <div class="col-span-12 xl:col-span-4 flex flex-col justify-between bg-orange-50 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
+                <div class="col-span-12 lg:col-span-4 flex flex-col justify-between bg-orange-50 dark:bg-gray-800 min-h-full rounded-lg border dark:border-gray-500 p-4">
                     <div class="cart-details">
                         <h2 class="text-gray-800 dark:text-orange-100 text-xl font-medium border pb-3 border-orange-200 dark:border-gray-500 border-t-0 border-l-0 border-r-0 border-b-[1] ">Current Sale</h2>
                         {{-- cart products --}}
@@ -295,6 +295,7 @@
                 margin: 8,
                 loop: true,
                 autoplay: true,
+                autoHeight: false,
                 autoplayHoverPause: true,
                 dots : false,
                 responsive : {
