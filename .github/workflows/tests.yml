@@ -76,3 +76,40 @@ jobs:
           php artisan config:clear
           php artisan route:cache
           php artisan route:clear
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      APP_ENV: testing
+      APP_URL: http://127.0.0.1:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /tmp/pos-browser.sqlite
+      E2E_ADMIN_PASSWORD: BrowserOnlyPassword123
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, fileinfo, mbstring, pdo_sqlite, xml, xmlwriter
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install application and browser
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+          npm run build
+          npx playwright install --with-deps chromium
+      - name: Prepare disposable browser test database
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch "$DB_DATABASE"
+          php artisan migrate --force
+          php artisan db:seed --class=BrowserTestSeeder --force
+      - name: Browser acceptance tests
+        run: npm run test:e2e

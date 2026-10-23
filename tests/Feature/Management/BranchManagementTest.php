@@ -108,7 +108,7 @@ class BranchManagementTest extends ManagementTestCase
         $this->signIn(UserRole::Cashier);
         $this->get('/team')->assertForbidden();
         $this->get('/pos-preview')->assertForbidden();
-        $this->get('/')->assertOk()->assertDontSee('User management')->assertDontSee('Branches &amp; settings', false);
+        $this->get('/')->assertOk()->assertDontSee('href="'.route('users.index').'"', false)->assertDontSee('href="'.route('branches.index').'"', false);
     }
 
     public function test_admin_can_switch_to_any_active_branch_and_preview_is_explicitly_non_transactional(): void

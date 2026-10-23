@@ -21,7 +21,7 @@ abstract class ManagementTestCase extends TestCase
     protected function signIn(UserRole $role = UserRole::Admin): User
     {
         $user = User::factory()->create(['role' => $role]);
-        $this->actingAs($user)->withSession(['user_version' => $user->session_version]);
+        $this->actingAs($user)->withSession(['user_version' => $user->session_version, 'password_hash_web' => $user->password]);
 
         return $user;
     }
