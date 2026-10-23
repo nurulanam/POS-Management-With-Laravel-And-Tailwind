@@ -1,3 +1,12 @@
+# POS Management
+
+## Laravel 13 upgrade (verification pending)
+
+This branch targets Laravel **13.38+** and requires **PHP 8.3+**.
+The dependency lockfile still needs regeneration with Composer before installation
+or deployment. See [the upgrade checklist](docs/laravel-13-upgrade.md) for the
+remaining steps, runtime requirements, and compatibility notes.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
