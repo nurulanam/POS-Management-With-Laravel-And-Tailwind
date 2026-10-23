@@ -2,6 +2,11 @@
 @section('title', 'Overview')
 @section('content')
 <div class="page-heading"><div><span class="eyebrow">LET’S GET TO WORK</span><h1>Hello, {{ auth()->user()->name }}<span class="heading-dot">.</span></h1><p>Your people, your branches, one connected workspace.</p></div><span class="badge badge-positive">● &nbsp; Account active</span></div>
+@if($salesStats)
+<div class="section-heading"><h2>{{ $branch->name }} · Today</h2><span class="muted">{{ auth()->user()->role === \App\Enums\UserRole::Cashier ? 'Your sales only' : 'All branch sales' }} · {{ $branch->timezone }}</span></div>
+<div class="stat-grid">@foreach($salesStats as $label => $value)<article class="stat-card"><span>{{ $label }}</span><strong>{{ $value }}</strong><div class="stat-line"></div></article>@endforeach</div>
+<div class="section-heading"><h2>Workspace overview</h2></div>
+@endif
 <div class="stat-grid">@foreach($stats as $label => $value)<article class="stat-card"><span>{{ $label }}</span><strong>{{ $value }}</strong><div class="stat-line"></div></article>@endforeach</div>
 @if(!$branch)
     <section class="empty-state panel"><span class="empty-symbol" aria-hidden="true">⌂</span><h2>{{ auth()->user()->isAdmin() ? 'Your first branch starts here' : 'No active branch assigned' }}</h2><p>{{ auth()->user()->isAdmin() ? 'Set up a branch, add its business details, then bring your team on board.' : 'Ask an administrator to assign you to an active branch. Your account is ready, but branch access is not yet available.' }}</p>@can('manage-business')<a class="btn btn-primary" href="{{ route('branches.create') }}">Create your first branch →</a>@endcan</section>

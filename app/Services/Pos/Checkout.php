@@ -76,7 +76,7 @@ class Checkout
                 'tendered_minor' => $tendered, 'change_minor' => $tendered - $total, 'payment_method' => 'cash',
                 'branch_snapshot' => $branch->only(['name', 'code', 'address', 'phone', 'email', 'receipt_footer']),
                 'customer_snapshot' => $customer?->only(['name', 'phone', 'email', 'address']),
-                'cashier_name' => $actor->name, 'paid_at' => now(),
+                'cashier_name' => $actor->name, 'paid_at' => now('UTC'),
             ]);
             $sale->items()->createMany($lines);
             foreach ($items as $item) {

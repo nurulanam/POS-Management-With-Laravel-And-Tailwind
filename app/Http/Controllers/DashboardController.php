@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Support\Money;
+use Carbon\CarbonImmutable;
 
 class DashboardController extends Controller
 {
@@ -22,6 +24,20 @@ class DashboardController extends Controller
             'Account status' => 'Active',
         ];
 
-        return view('dashboard', compact('branch', 'stats'));
+        $salesStats = [];
+        if ($branch) {
+            $start = CarbonImmutable::now($branch->timezone)->startOfDay();
+            $sales = $branch->sales()->visibleTo($request->user())
+                ->where('paid_at', '>=', $start->utc())->where('paid_at', '<', $start->addDay()->utc());
+            $salesStats = [
+                'Completed sales today' => (clone $sales)->count(),
+                'Sales total today (incl. tax)' => Money::format((int) (clone $sales)->sum('total_minor'), $branch->currency),
+            ];
+            if ($request->user()->can('manage-inventory')) {
+                $salesStats['Low-stock products'] = $branch->products()->where('is_active', true)->whereColumn('stock', '<=', 'reorder_level')->count();
+            }
+        }
+
+        return view('dashboard', compact('branch', 'stats', 'salesStats'));
     }
 }

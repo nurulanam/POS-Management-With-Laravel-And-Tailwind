@@ -262,3 +262,5 @@
     .receipt * { color: black !important; }
     .receipt-items tr { break-inside: avoid; }
 }
+
+.stat-card > strong { overflow-wrap: anywhere; font-size: clamp(20px, 2vw, 31px); }

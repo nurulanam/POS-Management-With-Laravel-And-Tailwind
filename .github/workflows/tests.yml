@@ -166,7 +166,7 @@ jobs:
       - name: MySQL regression and parallel checkout tests
         run: |
           set +e
-          php artisan test --configuration phpunit.mysql.xml --log-junit "$RUNNER_TEMP/phpunit.xml" > "$RUNNER_TEMP/mysql-output.txt" 2>&1
+          vendor/bin/phpunit --configuration phpunit.mysql.xml --fail-on-skipped --log-junit "$RUNNER_TEMP/phpunit.xml" > "$RUNNER_TEMP/mysql-output.txt" 2>&1
           result=$?
           cat "$RUNNER_TEMP/mysql-output.txt"
           if [ "$result" -ne 0 ]; then

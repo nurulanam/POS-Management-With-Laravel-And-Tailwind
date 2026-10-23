@@ -57,8 +57,11 @@ class ConcurrentCheckoutTest extends TestCase
             for ($i = 0; $i < 2; $i++) {
                 $file = tempnam(sys_get_temp_dir(), 'pos-race-');
                 $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, 0);
+                if ($sockets === false) {
+                    throw new \RuntimeException('Unable to create worker synchronization sockets.');
+                }
                 $pid = pcntl_fork();
-                if ($pid === -1 || $sockets === false) {
+                if ($pid === -1) {
                     throw new \RuntimeException('Unable to start concurrent checkout test.');
                 }
                 if ($pid === 0) {
