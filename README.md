@@ -1,11 +1,16 @@
 # POS Management
 
-## Laravel 13 upgrade (verification pending)
+## Laravel 13
 
-This branch targets Laravel **13.38+** and requires **PHP 8.3+**.
-The dependency lockfile still needs regeneration with Composer before installation
-or deployment. See [the upgrade checklist](docs/laravel-13-upgrade.md) for the
-remaining steps, runtime requirements, and compatibility notes.
+The project uses **Laravel 13.38**, **Tailwind CSS 4**, and **Vite 8**.
+Requirements: **PHP 8.3+**, Composer 2, and **Node 20.19+ (20.x) or 22.12+**.
+Both dependency lockfiles are up to date. Install with `composer install` and
+`npm ci`, then build assets with `npm run build`.
+
+CI validates dependencies, runs all 10 tests on PHP 8.3 / 8.4 / 8.5, and checks
+migrations, framework caches, and the frontend build. See the
+[upgrade and installation guide](docs/laravel-13-upgrade.md) for verified versions,
+compatibility changes, and deployment notes.
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
