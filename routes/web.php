@@ -11,6 +11,7 @@ use App\Http\Controllers\Pos\ProductController;
 use App\Http\Controllers\Pos\CustomerController;
 use App\Http\Controllers\Pos\CheckoutController;
 use App\Http\Controllers\Pos\SaleController;
+use App\Http\Controllers\Pos\RefundController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -30,6 +31,10 @@ Route::middleware(['auth', 'active', 'auth.session'])->group(function () {
             Route::get('/pos', [CheckoutController::class, 'index'])->name('pos.index');
             Route::get('/pos/catalog', [CheckoutController::class, 'catalog'])->name('pos.catalog');
             Route::post('/pos/checkout', [CheckoutController::class, 'store'])->name('pos.store');
+            Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
+            Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
+            Route::get('/sales/{sale}/refund', [RefundController::class, 'create'])->middleware('can:manage-adjustments')->name('refunds.create');
+            Route::post('/sales/{sale}/refund', [RefundController::class, 'store'])->middleware('can:manage-adjustments')->name('refunds.store');
             Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
             Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
             Route::resource('customers', CustomerController::class)->only(['index', 'create', 'store']);

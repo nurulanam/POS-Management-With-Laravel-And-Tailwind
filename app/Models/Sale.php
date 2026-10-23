@@ -11,15 +11,22 @@ class Sale extends Model
 {
     protected $guarded = ['id'];
 
+    protected $attributes = ['discount_minor' => 0, 'discount_type' => 'none'];
+
     protected $casts = [
         'branch_snapshot' => 'array', 'customer_snapshot' => 'array', 'paid_at' => 'immutable_datetime',
-        'subtotal_minor' => 'integer', 'tax_minor' => 'integer', 'total_minor' => 'integer',
+        'discount_minor' => 'integer', 'subtotal_minor' => 'integer', 'tax_minor' => 'integer', 'total_minor' => 'integer',
         'tendered_minor' => 'integer', 'change_minor' => 'integer', 'tax_basis_points' => 'integer',
     ];
 
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
     }
 
     public function scopeVisibleTo(Builder $query, User $user): Builder

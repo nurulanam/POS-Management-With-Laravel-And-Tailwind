@@ -264,3 +264,17 @@
 }
 
 .stat-card > strong { overflow-wrap: anywhere; font-size: clamp(20px, 2vw, 31px); }
+
+/* Sales adjustments are visually separate from immutable original receipts. */
+.discount-box { border: 1px solid #e1e7d9; border-radius: 8px; padding: 16px; margin-top: 20px; background: #f8faf5; }
+.discount-box legend { color: #687c58; font-size: 11px; font-weight: 650; padding: 0 7px; }
+.discount-box .field { margin-bottom: 12px; }
+.discount-receipt { padding-top: 15px; border-top: 1px dashed #dce3d2; font-size: 11px; overflow-wrap: anywhere; }
+.discount-receipt p { margin-top: 6px; color: #68785e; white-space: pre-line; }
+.return-summary { margin-bottom: 28px; font-size: 12px; }
+.refund-history-row { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; padding: 12px 0; border-top: 1px solid #e6ecdf; margin-top: 12px; }
+.return-line { padding: 24px 0; border-top: 1px solid #e6ecdf; }
+.return-line .form-grid { margin-top: 18px; }
+.refund-total-panel { position: sticky; top: 25px; }
+.refund-total-panel .grand-total { flex-wrap: wrap; }
+@media (max-width: 1100px) { .refund-total-panel { position: static; } }

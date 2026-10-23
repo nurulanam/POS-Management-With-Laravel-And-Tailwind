@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Models\RefundItem;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
@@ -21,15 +22,21 @@ class SaleController extends Controller
             ->when(isset($filter['from']), fn ($q) => $q->where('paid_at', '>=', CarbonImmutable::parse($filter['from'], $branch->timezone)->startOfDay()->utc()))
             ->when(isset($filter['to']), fn ($q) => $q->where('paid_at', '<', CarbonImmutable::parse($filter['to'], $branch->timezone)->addDay()->startOfDay()->utc()));
         $total = (int) (clone $query)->sum('total_minor');
-        $sales = $query->orderByDesc('id')->paginate(20)->withQueryString();
+        $refunded = (int) $branch->refunds()->whereIn('sale_id', (clone $query)->select('sales.id'))->sum('total_minor');
+        $sales = $query->withSum('refunds', 'total_minor')->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return view('sales.index', compact('sales', 'total'));
+        return view('sales.index', compact('sales', 'total', 'refunded'));
     }
 
     public function show(Request $request, Sale $sale)
     {
         $sale = $request->attributes->get('currentBranch')->sales()->visibleTo($request->user())->with('items')->findOrFail($sale->id);
 
-        return view('sales.receipt', compact('sale'));
+        $refunds = $sale->refunds()->orderByDesc('id')->paginate(10, ['*'], 'refund_page');
+        $refundTotal = (int) $sale->refunds()->sum('total_minor');
+        $returned = (int) RefundItem::whereIn('sale_item_id', $sale->items->pluck('id'))->sum('quantity');
+        $remaining = $sale->items->sum('quantity') - $returned;
+
+        return view('sales.receipt', compact('sale', 'refunds', 'refundTotal', 'returned', 'remaining'));
     }
 }
