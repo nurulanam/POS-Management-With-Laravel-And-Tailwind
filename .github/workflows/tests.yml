@@ -118,3 +118,81 @@ jobs:
           php artisan db:seed --class=BrowserTestSeeder --force
       - name: Browser acceptance tests
         run: npm run test:e2e
+
+  mysql:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: pos_test
+          MYSQL_ROOT_PASSWORD: test-only-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -ptest-only-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: test-only-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, fileinfo, mbstring, pdo_mysql, xml, xmlwriter, pcntl
+          tools: composer:v2
+          coverage: none
+      - name: Install dependencies and prepare isolated MySQL configuration
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('phpunit.xml')
+          for variable in tree.findall('./php/env'):
+              if variable.get('name') == 'DB_CONNECTION':
+                  variable.set('value', 'mysql')
+              if variable.get('name') == 'DB_DATABASE':
+                  variable.set('value', 'pos_test')
+          tree.write('phpunit.mysql.xml')
+          PY
+      - name: MySQL regression and parallel checkout tests
+        run: |
+          set +e
+          vendor/bin/phpunit --configuration phpunit.mysql.xml --fail-on-skipped --log-junit "$RUNNER_TEMP/phpunit.xml" > "$RUNNER_TEMP/mysql-output.txt" 2>&1
+          result=$?
+          cat "$RUNNER_TEMP/mysql-output.txt"
+          if [ "$result" -ne 0 ]; then
+            python3 - <<'PYLOG'
+          import os, pathlib, re
+          output = (pathlib.Path(os.environ['RUNNER_TEMP']) / 'mysql-output.txt').read_text()
+          output = re.sub(r'\x1b\[[0-9;]*m', '', output)[-24000:]
+          print('::error title=MySQL command output::' + output.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PYLOG
+          fi
+          exit "$result"
+      - name: Report MySQL test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import xml.etree.ElementTree as ET
+          report = pathlib.Path(os.environ['RUNNER_TEMP']) / 'phpunit.xml'
+          if report.exists():
+              root = ET.parse(report).getroot()
+              cases = list(root.iter('testcase'))
+              failures = list(root.iter('failure')) + list(root.iter('error'))
+              print(f'::notice title=MySQL results::{len(cases)} tests, {len(failures)} failures/errors')
+              for failure in failures:
+                  message = ''.join(failure.itertext())[:12000]
+                  message = message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+                  print(f'::error title=MySQL failure::{message}')
+          PY

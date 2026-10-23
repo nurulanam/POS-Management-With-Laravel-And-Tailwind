@@ -1,0 +1,10 @@
+@extends('layouts.management')
+@section('title', 'Stock ledger')
+@section('content')
+<a class="back-link" href="{{ route('products.index') }}">← Back to products</a>
+<div class="page-heading"><div><span class="eyebrow">{{ $product->sku }} · {{ $currentBranch->name }}</span><h1>{{ $product->name }}</h1><p>Opening stock, adjustments, and completed sales. This ledger cannot be edited.</p></div><span class="badge badge-positive">{{ $product->stock }} units on hand</span></div>
+<section class="panel"><h2>Record a stock adjustment</h2><form method="POST" action="{{ route('products.adjust', $product) }}" class="stock-form">@csrf
+<input type="hidden" name="branch_id" value="{{ $currentBranch->id }}"><input type="hidden" name="request_key" value="{{ old('request_key', $requestKey) }}"><input type="hidden" name="expected_stock" value="{{ $product->stock }}">
+<div class="field"><label for="delta">Quantity change *</label><input id="delta" name="delta" type="number" step="1" min="-1000000000" max="1000000000" value="{{ old('delta') }}" placeholder="e.g. 20 or -3" required><small>Positive to receive stock; negative to remove it.</small></div><div class="field"><label for="reason">Reason *</label><input id="reason" name="reason" value="{{ old('reason') }}" maxlength="500" placeholder="e.g. Delivery received, damaged units" required></div><button class="btn btn-primary">Record adjustment</button></form></section>
+<section class="panel table-panel section-gap"><div class="table-scroll"><table class="data-table"><thead><tr><th>Date</th><th>Reason</th><th>Staff</th><th>Change</th><th>Balance</th></tr></thead><tbody>@forelse($movements as $movement)<tr><td>{{ $movement->created_at->setTimezone($currentBranch->timezone)->format('d M Y H:i') }}</td><td>{{ $movement->reason }}</td><td>{{ $movement->user->name }}</td><td>{{ $movement->delta > 0 ? '+' : '' }}{{ $movement->delta }}</td><td>{{ $movement->balance }}</td></tr>@empty<tr><td colspan="5">No stock movements yet.</td></tr>@endforelse</tbody></table></div><div class="pagination-area">{{ $movements->links() }}</div></section>
+@endsection

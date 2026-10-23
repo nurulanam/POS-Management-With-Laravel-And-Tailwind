@@ -14,6 +14,14 @@
         <div class="nav-label">WORKSPACE</div>
         <nav class="workspace-nav" aria-label="Main navigation">
             <a @class(['selected' => request()->routeIs('dashboard')]) href="{{ route('dashboard') }}"><span aria-hidden="true">◫</span> Overview</a>
+            @if(isset($currentBranch) && $currentBranch)
+                <a @class(['selected' => request()->routeIs('pos.index')]) href="{{ route('pos.index') }}"><span aria-hidden="true">▦</span> Point of sale</a>
+                <a @class(['selected' => request()->routeIs('sales.*')]) href="{{ route('sales.index') }}"><span aria-hidden="true">≡</span> Sales & receipts</a>
+                <a @class(['selected' => request()->routeIs('customers.*')]) href="{{ route('customers.index') }}"><span aria-hidden="true">♧</span> Customers</a>
+                @can('manage-inventory')
+                    <a @class(['selected' => request()->routeIs('products.*')]) href="{{ route('products.index') }}"><span aria-hidden="true">▣</span> Products & stock</a>
+                @endcan
+            @endif
             @can('manage-business')
                 <a @class(['selected' => request()->routeIs('users.*')]) href="{{ route('users.index') }}"><span aria-hidden="true">♙</span> User management</a>
                 <a @class(['selected' => request()->routeIs('branches.*')]) href="{{ route('branches.index') }}"><span aria-hidden="true">⚙</span> Branches & settings</a>
@@ -51,7 +59,7 @@
                 <div class="notice notice-error" role="alert"><strong>Please check the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
             @endif
             @yield('content')
-            <footer class="workspace-footer"><span>Sunset Sales · Your business, in focus.</span><span>User management & branch settings</span></footer>
+            <footer class="workspace-footer"><span>Sunset Sales · Your business, in focus.</span><span>Multi-branch point of sale</span></footer>
         </main>
     </div>
 </div>

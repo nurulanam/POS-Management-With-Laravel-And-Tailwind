@@ -20,6 +20,6 @@
         </section>
         <div class="form-actions"><a class="btn btn-outline" href="{{ route('users.index') }}">Cancel</a><button class="btn btn-primary" type="submit">{{ $staff->exists ? 'Save staff changes' : 'Create staff account' }} →</button></div>
     </div>
-    <aside class="form-help"><span class="eyebrow">THE RIGHT LEVEL OF ACCESS</span><h2>Clear roles.<br>Confident teams.</h2><dl><dt>Admin</dt><dd>Manages all users, branches, and business settings.</dd><dt>Manager</dt><dd>Accesses assigned branches and their team directories. Cannot edit users or settings.</dd><dt>Cashier</dt><dd>Accesses only assigned branches. Sales processing will be added in the next phase.</dd></dl><p>You cannot deactivate or demote your own administrator account.</p></aside>
+    <aside class="form-help"><span class="eyebrow">THE RIGHT LEVEL OF ACCESS</span><h2>Clear roles.<br>Confident teams.</h2><dl><dt>Admin</dt><dd>Manages all users, branches, and business settings.</dd><dt>Manager</dt><dd>Accesses assigned branches and their team directories. Cannot edit users or settings.</dd><dt>Cashier</dt><dd>Processes cash sales in assigned branches and views their own receipts. Cannot edit inventory or settings.</dd></dl><p>You cannot deactivate or demote your own administrator account.</p></aside>
 </form>
 @endsection

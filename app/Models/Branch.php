@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Branch extends Model
 {
@@ -25,5 +26,19 @@ class Branch extends Model
         return $query->when(! $user->isAdmin(), fn (Builder $query) =>
             $query->whereHas('users', fn (Builder $users) => $users->whereKey($user->id))
         );
+    }
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
     }
 }

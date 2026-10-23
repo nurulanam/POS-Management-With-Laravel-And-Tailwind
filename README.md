@@ -1,12 +1,30 @@
 # Sunset Sales · POS Management
 
 A Laravel 13 / Tailwind CSS 4 workspace for a business with multiple branches.
-The current implementation provides **authentication, staff management, branch
-access, and per-branch settings**. Inventory, checkout, sales history, and receipt
-generation are **not implemented yet**. `/pos-preview` preserves the original
-static POS design and is explicitly labeled as a non-transactional preview.
+The application provides **staff management, branch settings, products and stock,
+customers, cash checkout, sales history, and printable receipts**. `/pos` is live
+checkout; `/pos-preview` preserves the old static design and remains explicitly
+labeled as non-transactional. See [POS operations](docs/pos-operations.md) for
+pricing, tax, permissions, transaction safety, and current limits.
 
 ## Implemented
+
+### POS operations
+
+- Branch-local products, SKUs/barcodes, prices, stock thresholds, and archiving.
+- Audited stock adjustments with replay protection and non-negative balances.
+- Customer records and optional walk-in checkout.
+- Server-calculated cash sales with exact integer money, tax, change, and atomic
+  stock deductions. No real payment-provider integration is included.
+- Duplicate-checkout protection and immutable, printable receipt snapshots.
+- Branch-scoped sales history; cashiers see only their own sales.
+- Today's branch sales overview and manager/admin low-stock counts.
+
+Discounts, refunds, stock transfers, card/mobile integrations, and fractional-unit
+products remain outside this phase. **Do not use live checkout to simulate sales
+on a production database.**
+
+### Staff and branch management
 
 - Login/logout with login throttling, session regeneration, and active-account checks.
 - Admin-managed staff accounts, search, role/status/branch filters, and pagination.
@@ -76,7 +94,7 @@ registration, and no automatically privileged existing users.
 ### Upgrading an existing installation
 
 Back up the database and preserve `.env` and `APP_KEY`. Install the committed
-lockfiles, run the **two new staff/branch migrations**, rebuild frontend assets,
+lockfiles, run all pending migrations, including the **POS operations migration**, rebuild frontend assets,
 and clear/rebuild configuration, route, and view caches. Existing users default
 to **Cashier**, keep their current active status/password, and have **no branch
 assignments** until an administrator assigns them. Create an initial administrator
@@ -101,13 +119,15 @@ PHPUnit uses an in-memory SQLite database and test-only encryption key. Coverage
 includes branch isolation, role escalation attempts, account/session revocation,
 password changes, admin setup, settings validation, and the original Sanctum /
 request-forgery regression tests. CI also checks native PHP syntax, migrations,
-and framework caches.
+and framework caches. MySQL CI additionally runs real parallel checkout tests for
+overselling and duplicate submissions; these two tests are skipped on SQLite.
 
 ### Browser acceptance tests
 
 Playwright exercises the real Laravel server and production assets: admin branch
 and staff creation, settings persistence, first-login password changes, manager
-branch isolation, authorization failures, and mobile cashier navigation.
+branch isolation, authorization failures, mobile cashier navigation, product and
+customer creation, cash checkout, stock adjustments, and receipt preservation.
 
 Use a **dedicated disposable database**. Never use production data or credentials
 with the browser fixture seeder. A testing environment alone does not make an

@@ -24,6 +24,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('manage-business', fn (User $user) => $user->is_active && $user->isAdmin());
+        Gate::define('manage-inventory', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
         Gate::define('view-team', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
     }
 }
