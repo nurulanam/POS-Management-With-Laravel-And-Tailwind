@@ -74,6 +74,7 @@ jobs:
           php artisan migrate:rollback --force
           php artisan migrate --force
           php artisan view:cache
+          find storage/framework/views -name '*.php' -print0 | xargs -0 -n1 php -l
           php artisan view:clear
           php artisan config:cache
           php artisan config:clear
@@ -163,7 +164,7 @@ jobs:
                   variable.set('value', 'pos_test')
           tree.write('phpunit.mysql.xml')
           PY
-      - name: MySQL regression and parallel checkout tests
+      - name: MySQL regression and parallel transaction tests
         run: |
           set +e
           vendor/bin/phpunit --configuration phpunit.mysql.xml --fail-on-skipped --log-junit "$RUNNER_TEMP/phpunit.xml" > "$RUNNER_TEMP/mysql-output.txt" 2>&1

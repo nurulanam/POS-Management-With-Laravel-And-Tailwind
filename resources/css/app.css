@@ -278,3 +278,9 @@
 .refund-total-panel { position: sticky; top: 25px; }
 .refund-total-panel .grand-total { flex-wrap: wrap; }
 @media (max-width: 1100px) { .refund-total-panel { position: static; } }
+
+@media (max-width: 760px) {
+    .return-summary .panel-heading, #refund-form .panel-heading { flex-direction: column; }
+    .stat-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+    .stat-card > strong { overflow-wrap: anywhere; }
+}

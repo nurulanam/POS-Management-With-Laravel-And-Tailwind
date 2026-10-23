@@ -5,7 +5,6 @@ namespace Tests\Feature\Pos;
 use App\Enums\UserRole;
 use App\Models\Refund;
 use App\Models\Sale;
-use App\Services\Pos\ReturnQuote;
 use Illuminate\Support\Str;
 
 class RefundTest extends OperationsTestCase
@@ -44,7 +43,7 @@ class RefundTest extends OperationsTestCase
         $this->get(route('sales.show', $sale))->assertOk()->assertSee('Partially returned')->assertSee('BDT 21.50');
     }
 
-    public function test_split_refunds_exhaust_odd_tax_cents_without_over_refunding(): void
+    public function test_split_refunds_preserve_original_pricing_and_never_over_refund(): void
     {
         [$branch, $product, $sale] = $this->sell(); // BDT 26.88: tax 188, evenly split here.
         $product->update(['price_minor' => 99999, 'is_active' => false]);
@@ -168,7 +167,7 @@ class RefundTest extends OperationsTestCase
         $this->assertSame(0, Refund::firstOrFail()->total_minor);
         $this->assertSame(10, $product->fresh()->stock);
         $this->post(route('refunds.store', $sale), $this->payload($branch, $sale, returned: 2))->assertSessionHasErrors('items');
-        $this->get(route('sales.show', $sale))->assertSee('All units returned');
+        $this->get(route('sales.show', $sale))->assertOk()->assertSee('All units returned');
     }
 
     public function test_non_cash_sales_cannot_be_refunded_as_cash(): void
