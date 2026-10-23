@@ -164,7 +164,20 @@ jobs:
           tree.write('phpunit.mysql.xml')
           PY
       - name: MySQL regression and parallel checkout tests
-        run: php artisan test --configuration phpunit.mysql.xml --log-junit "$RUNNER_TEMP/phpunit.xml"
+        run: |
+          set +e
+          php artisan test --configuration phpunit.mysql.xml --log-junit "$RUNNER_TEMP/phpunit.xml" > "$RUNNER_TEMP/mysql-output.txt" 2>&1
+          result=$?
+          cat "$RUNNER_TEMP/mysql-output.txt"
+          if [ "$result" -ne 0 ]; then
+            python3 - <<'PYLOG'
+          import os, pathlib, re
+          output = (pathlib.Path(os.environ['RUNNER_TEMP']) / 'mysql-output.txt').read_text()
+          output = re.sub(r'\x1b\[[0-9;]*m', '', output)[-24000:]
+          print('::error title=MySQL command output::' + output.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PYLOG
+          fi
+          exit "$result"
       - name: Report MySQL test results
         if: always()
         run: |
