@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, dom, fileinfo, mbstring, pdo_mysql, pdo_sqlite, xml, xmlwriter
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install and validate locked dependencies
+        run: |
+          composer validate --strict
+          composer install --no-interaction --prefer-dist
+          composer check-platform-reqs
+          composer audit
+          npm ci
+          npm audit
+          npm run build
+      - name: Prepare an isolated application environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: PHP syntax checks
+        run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: PHPUnit regression tests
+        run: php artisan test --log-junit "$RUNNER_TEMP/phpunit.xml"
+      - name: Report test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import xml.etree.ElementTree as ET
+          report = pathlib.Path(os.environ['RUNNER_TEMP']) / 'phpunit.xml'
+          if report.exists():
+              root = ET.parse(report).getroot()
+              cases = list(root.iter('testcase'))
+              failures = list(root.iter('failure')) + list(root.iter('error'))
+              print(f'::notice title=PHPUnit results::{len(cases)} tests, {len(failures)} failures/errors')
+              for failure in failures:
+                  message = ''.join(failure.itertext())[:12000]
+                  message = message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+                  print(f'::error title=PHPUnit failure::{message}')
+          PY
+      - name: Framework boot, migrations, and cache smoke tests
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: |
+          php artisan --version
+          php artisan route:list
+          php artisan migrate --force
+          php artisan view:cache
+          php artisan view:clear
+          php artisan config:cache
+          php artisan config:clear
+          php artisan route:cache
+          php artisan route:clear

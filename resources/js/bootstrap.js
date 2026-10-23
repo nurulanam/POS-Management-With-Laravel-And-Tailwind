@@ -1,3 +1,8 @@
+import jQuery from 'jquery';
+
+// Owl Carousel and the dashboard share one bundled jQuery instance.
+window.$ = window.jQuery = jQuery;
+
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the
