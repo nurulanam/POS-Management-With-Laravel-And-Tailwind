@@ -2,7 +2,7 @@
 
 A Laravel 13 / Tailwind CSS 4 workspace for a business with multiple branches.
 The application provides **staff management, branch settings, products and stock,
-customers, cash checkout, sales history, and printable receipts**. `/pos` is live
+customers, cash checkout, discounts, returns, sales history, and printable receipts**. `/pos` is live
 checkout; `/pos-preview` preserves the old static design and remains explicitly
 labeled as non-transactional. See [POS operations](docs/pos-operations.md) for
 pricing, tax, permissions, transaction safety, and current limits.
@@ -18,9 +18,11 @@ pricing, tax, permissions, transaction safety, and current limits.
   stock deductions. No real payment-provider integration is included.
 - Duplicate-checkout protection and immutable, printable receipt snapshots.
 - Branch-scoped sales history; cashiers see only their own sales.
-- Today's branch sales overview and manager/admin low-stock counts.
+- Manager/admin fixed or percentage discounts with a required reason and authorizer snapshot.
+- Partial/full cash refunds, optional restocking, separate refund receipts and ledger.
+- Net retained sales history and today's sales/refund activity, plus low-stock counts.
 
-Discounts, refunds, stock transfers, card/mobile integrations, and fractional-unit
+Stock transfers, card/mobile integrations, refund reversal, and fractional-unit
 products remain outside this phase. **Do not use live checkout to simulate sales
 on a production database.**
 
@@ -94,7 +96,7 @@ registration, and no automatically privileged existing users.
 ### Upgrading an existing installation
 
 Back up the database and preserve `.env` and `APP_KEY`. Install the committed
-lockfiles, run all pending migrations, including the **POS operations migration**, rebuild frontend assets,
+lockfiles, run all pending migrations, including the **POS operations and discounts/refunds migrations**, rebuild frontend assets,
 and clear/rebuild configuration, route, and view caches. Existing users default
 to **Cashier**, keep their current active status/password, and have **no branch
 assignments** until an administrator assigns them. Create an initial administrator
@@ -119,15 +121,19 @@ PHPUnit uses an in-memory SQLite database and test-only encryption key. Coverage
 includes branch isolation, role escalation attempts, account/session revocation,
 password changes, admin setup, settings validation, and the original Sanctum /
 request-forgery regression tests. CI also checks native PHP syntax, migrations,
-and framework caches. MySQL CI additionally runs real parallel checkout tests for
-overselling and duplicate submissions; these two tests are skipped on SQLite.
+and framework caches. Adjustment tests cover authorization, exact-cent allocations,
+partial returns, stale quotes, duplicate refunds, restock limits, and net reporting.
+MySQL CI additionally runs six real parallel tests for checkout overselling/replay,
+refund over-return/replay/staleness, and refund-versus-checkout stock consistency.
+These concurrency tests are intentionally skipped on SQLite.
 
 ### Browser acceptance tests
 
 Playwright exercises the real Laravel server and production assets: admin branch
 and staff creation, settings persistence, first-login password changes, manager
 branch isolation, authorization failures, mobile cashier navigation, product and
-customer creation, cash checkout, stock adjustments, and receipt preservation.
+customer creation, cash checkout, discounts, partial/full returns, optional
+restocking, print styling, stock adjustments, and receipt preservation.
 
 Use a **dedicated disposable database**. Never use production data or credentials
 with the browser fixture seeder. A testing environment alone does not make an

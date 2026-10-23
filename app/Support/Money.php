@@ -30,6 +30,9 @@ class Money
     public static function decimal(int $minor, string $currency): string
     {
         $digits = self::precision($currency);
+        if ($minor < 0) {
+            return '-'.self::decimal(-$minor, $currency);
+        }
         if ($digits === 0) {
             return (string) $minor;
         }

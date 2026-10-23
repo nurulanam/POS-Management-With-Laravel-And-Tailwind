@@ -7,6 +7,7 @@ use App\Services\Pos\Checkout;
 use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
@@ -45,6 +46,9 @@ class CheckoutController extends Controller
     public function store(Request $request, Checkout $checkout)
     {
         $data = $request->validate([
+            'discount_type' => ['nullable', Rule::in(['none', 'fixed', 'percent'])],
+            'discount_value' => [Rule::requiredIf(in_array($request->input('discount_type'), ['fixed', 'percent'], true)), 'nullable', 'string', 'max:20'],
+            'discount_reason' => [Rule::requiredIf(in_array($request->input('discount_type'), ['fixed', 'percent'], true)), 'nullable', 'string', 'min:3', 'max:500'],
             'idempotency_key' => ['required', 'uuid'], 'currency' => ['required', 'string', 'size:3'],
             'expected_tax_basis_points' => ['required', 'integer', 'between:0,10000'],
             'customer_id' => ['nullable', 'integer'], 'tendered' => ['required', 'string', 'max:20'],

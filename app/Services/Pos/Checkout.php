@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -23,10 +24,17 @@ class Checkout
             ])->sortBy('product_id')->values();
             $tendered = Money::parse($data['tendered'], $branch->currency, 'tendered', 2_000_000_000_000);
             $taxRate = Money::basisPoints($branch->tax_rate);
-            $hash = hash('sha256', json_encode([
+            $discountType = $data['discount_type'] ?? 'none';
+            $discountValue = $discountType === 'none' ? 0 : Money::parse($data['discount_value'], $discountType === 'percent' ? 'BDT' : $branch->currency, 'discount_value', $discountType === 'percent' ? 10000 : 1_000_000_000_000);
+            $hashData = [
                 $items->all(), (int) ($data['customer_id'] ?? 0), $tendered,
                 $data['currency'], (int) $data['expected_tax_basis_points'],
-            ], JSON_THROW_ON_ERROR));
+            ];
+            // Preserve pre-discount idempotency hashes for old forms / receipts.
+            if ($discountType !== 'none') {
+                $hashData[] = [$discountType, $discountValue, $data['discount_reason']];
+            }
+            $hash = hash('sha256', json_encode($hashData, JSON_THROW_ON_ERROR));
             $existing = $branch->sales()->where('idempotency_key', $data['idempotency_key'])->first();
             if ($existing) {
                 abort_unless($existing->user_id === $actor->id, 403);
@@ -62,9 +70,17 @@ class Checkout
             if ($subtotal > 1_000_000_000_000) {
                 throw ValidationException::withMessages(['items' => 'This sale exceeds the supported value limit.']);
             }
-            // Tax-exclusive pricing; round the aggregate tax half-up to the currency's minor unit.
-            $tax = intdiv($subtotal * $taxRate + 5_000, 10_000);
-            $total = $subtotal + $tax;
+            $discount = 0;
+            if ($discountType !== 'none') {
+                Gate::forUser($actor)->authorize('manage-adjustments');
+                $discount = $discountType === 'percent' ? intdiv($subtotal * $discountValue + 5000, 10000) : $discountValue;
+                if ($discountValue <= 0 || $discount > $subtotal) {
+                    throw ValidationException::withMessages(['discount_value' => 'Use a positive discount that does not exceed the subtotal (or 100%).']);
+                }
+            }
+            // Discounts reduce the tax base; tax is rounded once on the discounted subtotal.
+            $tax = intdiv(($subtotal - $discount) * $taxRate + 5_000, 10_000);
+            $total = $subtotal - $discount + $tax;
             if ($tendered < $total) {
                 throw ValidationException::withMessages(['tendered' => 'Cash received must cover the total of '.Money::format($total, $branch->currency).'.']);
             }
@@ -72,6 +88,11 @@ class Checkout
                 'user_id' => $actor->id, 'customer_id' => $customer?->id,
                 'reference' => 'S-'.Str::ulid(), 'idempotency_key' => $data['idempotency_key'], 'request_hash' => $hash,
                 'currency' => $branch->currency, 'timezone' => $branch->timezone, 'tax_basis_points' => $taxRate,
+                'discount_minor' => $discount, 'discount_type' => $discountType,
+                'discount_value' => $discountType === 'none' ? null : Money::decimal($discountValue, $discountType === 'percent' ? 'BDT' : $branch->currency),
+                'discount_reason' => $discountType === 'none' ? null : $data['discount_reason'],
+                'discount_authorized_by' => $discountType === 'none' ? null : $actor->id,
+                'discount_authorizer_name' => $discountType === 'none' ? null : $actor->name,
                 'subtotal_minor' => $subtotal, 'tax_minor' => $tax, 'total_minor' => $total,
                 'tendered_minor' => $tendered, 'change_minor' => $tendered - $total, 'payment_method' => 'cash',
                 'branch_snapshot' => $branch->only(['name', 'code', 'address', 'phone', 'email', 'receipt_footer']),

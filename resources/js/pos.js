@@ -13,6 +13,9 @@ if (app) {
     const notice = document.getElementById('cart-notice');
     const tender = document.getElementById('tendered');
     const submit = document.getElementById('checkout-submit');
+    const discountType = document.getElementById('discount_type');
+    const discountValue = document.getElementById('discount_value');
+    const discountReason = document.getElementById('discount_reason');
     let controller;
     let nextPage = null;
     let total = 0n;
@@ -22,25 +25,46 @@ if (app) {
         const minor = BigInt(value);
         return `${config.currency} ${config.precision === 0 ? minor : `${minor / 100n}.${String(minor % 100n).padStart(2, '0')}`}`;
     }
-    function cashAmount() {
-        const value = tender.value.trim();
-        const pattern = config.precision === 0 ? /^\d{1,13}$/ : /^\d{1,13}(?:\.\d{1,2})?$/;
+    function parseAmount(value, precision) {
+        value = value.trim();
+        const pattern = precision === 0 ? /^\d{1,13}$/ : /^\d{1,13}(?:\.\d{1,2})?$/;
         if (!pattern.test(value)) return null;
         const [whole, fraction = ''] = value.split('.');
-        return config.precision === 0 ? BigInt(whole) : BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+        return precision === 0 ? BigInt(whole) : BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
     }
     function updateTotals() {
         const subtotal = [...cart.values()].reduce((sum, item) => sum + BigInt(item.price_minor) * BigInt(item.quantity), 0n);
-        const tax = (subtotal * BigInt(config.taxBasisPoints) + 5000n) / 10000n;
-        total = subtotal + tax;
+        let discount = 0n;
+        let discountError = '';
+        const kind = discountType?.value ?? 'none';
+        if (discountType) {
+            const active = kind !== 'none';
+            document.getElementById('discount-fields').hidden = !active;
+            discountValue.disabled = discountReason.disabled = !active;
+            discountValue.required = discountReason.required = active;
+            document.querySelector('label[for="discount_value"]').textContent = kind === 'percent' ? 'Discount percentage' : `Discount value (${config.currency})`;
+            if (active) {
+                const value = parseAmount(discountValue.value, kind === 'percent' ? 2 : config.precision);
+                if (value === null || value <= 0n || (kind === 'percent' && value > 10000n)) {
+                    discountError = 'Enter a positive discount, with percentage no greater than 100%.';
+                } else {
+                    discount = kind === 'percent' ? (subtotal * value + 5000n) / 10000n : value;
+                    if (discount > subtotal) { discountError = 'Discount cannot exceed the subtotal.'; discount = 0n; }
+                }
+                if (discountReason.value.trim().length < 3) discountError = 'Add a reason for this manager discount.';
+            }
+        }
+        const tax = ((subtotal - discount) * BigInt(config.taxBasisPoints) + 5000n) / 10000n;
+        total = subtotal - discount + tax;
+        document.getElementById('cart-discount').textContent = `− ${amount(discount)}`;
         document.getElementById('cart-subtotal').textContent = amount(subtotal);
         document.getElementById('cart-tax').textContent = amount(tax);
         document.getElementById('cart-total').textContent = amount(total);
-        const cash = cashAmount();
+        const cash = parseAmount(tender.value, config.precision);
         document.getElementById('cart-change').textContent = cash === null ? 'Enter cash received' : cash < total ? `Short ${amount(total - cash)}` : amount(cash - total);
         const invalidStock = [...cart.values()].some(item => item.quantity > item.stock);
-        submit.disabled = submitting || cart.size === 0 || cash === null || cash < total || cash > 2000000000000n || subtotal > 1000000000000n || invalidStock;
-        notice.textContent = !cart.size ? 'Your cart is empty. Choose a product to begin.' : invalidStock ? 'Some quantities exceed available stock. Reduce them before checkout.' : `${cart.size} product${cart.size === 1 ? '' : 's'} in this sale.`;
+        submit.disabled = submitting || cart.size === 0 || cash === null || cash < total || cash > 2000000000000n || subtotal > 1000000000000n || invalidStock || Boolean(discountError);
+        notice.textContent = discountError || (!cart.size ? 'Your cart is empty. Choose a product to begin.' : invalidStock ? 'Some quantities exceed available stock. Reduce them before checkout.' : `${cart.size} product${cart.size === 1 ? '' : 's'} in this sale.`);
     }
     function renderCart() {
         lines.replaceChildren();
@@ -89,13 +113,14 @@ if (app) {
     }
     async function loadCatalog(page = 1) {
         controller?.abort();
-        controller = new AbortController();
+        const pending = new AbortController();
+        controller = pending;
         more.disabled = true;
         message.textContent = 'Loading products…';
         try {
             const url = new URL(config.catalogUrl, window.location.origin);
             url.search = new URLSearchParams({ q: search.value, page, branch_id: config.branchId });
-            const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+            const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: pending.signal });
             if (!response.ok) throw new Error('Catalog unavailable. Your branch or session may have changed. Reload this page to continue.');
             const data = await response.json();
             if (page === 1) grid.replaceChildren();
@@ -120,13 +145,16 @@ if (app) {
             if (error.name === 'AbortError') return;
             message.textContent = error.message || 'Unable to load products. Try again.';
             more.hidden = false; more.textContent = 'Retry catalog'; nextPage = null;
-        } finally { more.disabled = false; }
+        } finally { if (controller === pending) more.disabled = false; }
     }
     let timer;
     search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => loadCatalog(), 200); });
     search.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); clearTimeout(timer); loadCatalog(); } });
     more.addEventListener('click', () => loadCatalog(nextPage ?? 1));
     tender.addEventListener('input', updateTotals);
+    discountType?.addEventListener('change', updateTotals);
+    discountValue?.addEventListener('input', updateTotals);
+    discountReason?.addEventListener('input', updateTotals);
     document.getElementById('cart-clear').addEventListener('click', () => { cart.clear(); renderCart(); });
     document.getElementById('checkout-form').addEventListener('submit', event => {
         updateTotals();

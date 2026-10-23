@@ -29,9 +29,14 @@ class DashboardController extends Controller
             $start = CarbonImmutable::now($branch->timezone)->startOfDay();
             $sales = $branch->sales()->visibleTo($request->user())
                 ->where('paid_at', '>=', $start->utc())->where('paid_at', '<', $start->addDay()->utc());
+            $salesTotal = (int) (clone $sales)->sum('total_minor');
+            $refundTotal = (int) $branch->refunds()->visibleTo($request->user())
+                ->where('refunded_at', '>=', $start->utc())->where('refunded_at', '<', $start->addDay()->utc())->sum('total_minor');
             $salesStats = [
                 'Completed sales today' => (clone $sales)->count(),
-                'Sales total today (incl. tax)' => Money::format((int) (clone $sales)->sum('total_minor'), $branch->currency),
+                'Sales total today (incl. tax)' => Money::format($salesTotal, $branch->currency),
+                'Refunds processed today' => Money::format($refundTotal, $branch->currency),
+                'Net activity today' => Money::format($salesTotal - $refundTotal, $branch->currency),
             ];
             if ($request->user()->can('manage-inventory')) {
                 $salesStats['Low-stock products'] = $branch->products()->where('is_active', true)->whereColumn('stock', '<=', 'reorder_level')->count();

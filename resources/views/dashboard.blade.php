@@ -5,6 +5,7 @@
 @if($salesStats)
 <div class="section-heading"><h2>{{ $branch->name }} · Today</h2><span class="muted">{{ auth()->user()->role === \App\Enums\UserRole::Cashier ? 'Your sales only' : 'All branch sales' }} · {{ $branch->timezone }}</span></div>
 <div class="stat-grid">@foreach($salesStats as $label => $value)<article class="stat-card"><span>{{ $label }}</span><strong>{{ $value }}</strong><div class="stat-line"></div></article>@endforeach</div>
+<p class="muted section-gap">Net activity includes tax: sales charged today minus refunds processed today, including returns of older sales. It may be negative and is not cash-drawer reconciliation.</p>
 <div class="section-heading"><h2>Workspace overview</h2></div>
 @endif
 <div class="stat-grid">@foreach($stats as $label => $value)<article class="stat-card"><span>{{ $label }}</span><strong>{{ $value }}</strong><div class="stat-line"></div></article>@endforeach</div>
