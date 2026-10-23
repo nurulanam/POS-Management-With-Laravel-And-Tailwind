@@ -3,9 +3,11 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:e2e": "playwright test"
     },
     "devDependencies": {
+        "@playwright/test": "^1.64.1",
         "@tailwindcss/vite": "^4.3.3",
         "axios": "^1.20.0",
         "flowbite": "^4.0.2",
@@ -14,8 +16,8 @@
         "vite": "^8.3.5"
     },
     "dependencies": {
-        "owl.carousel": "^2.3.4",
-        "jquery": "^3.7.1"
+        "jquery": "^3.7.1",
+        "owl.carousel": "^2.3.4"
     },
     "engines": {
         "node": "^20.19.0 || >=22.12.0"
