@@ -1,0 +1,67 @@
+name: Update Composer dependencies
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/a5217ae7-pos-management-with-laravel-an]
+    paths:
+      - composer.json
+      - .github/workflows/update-composer.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: composer-update-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/arena/a5217ae7-pos-management-with-laravel-an'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, fileinfo, mbstring, pdo_mysql, pdo_sqlite, xml, xmlwriter
+          tools: composer:v2
+          coverage: none
+      - name: Resolve dependencies on the minimum supported PHP version
+        run: composer update --with-all-dependencies --no-interaction --prefer-dist
+      - name: Check the resolved dependencies
+        run: |
+          composer validate --strict
+          composer check-platform-reqs
+          composer audit
+      - name: Commit the generated lockfile to this upgrade branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add composer.lock
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Composer lockfile for Laravel 13"
+            git push origin HEAD:arena/a5217ae7-pos-management-with-laravel-an
+          fi
+      - name: Prepare an isolated test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Test application and framework integration
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: |
+          php artisan --version
+          php artisan route:list
+          php artisan test
+          php artisan migrate --force
+          php artisan view:cache
+          php artisan view:clear
+          php artisan config:cache
+          php artisan config:clear
+          php artisan route:cache
+          php artisan route:clear
