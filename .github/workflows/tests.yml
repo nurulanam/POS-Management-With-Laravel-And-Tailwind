@@ -65,10 +65,13 @@ jobs:
       - name: Framework boot, migrations, and cache smoke tests
         env:
           DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
+          DB_DATABASE: ${{ runner.temp }}/migration-smoke.sqlite
         run: |
+          touch "$DB_DATABASE"
           php artisan --version
           php artisan route:list
+          php artisan migrate --force
+          php artisan migrate:rollback --force
           php artisan migrate --force
           php artisan view:cache
           php artisan view:clear
@@ -86,6 +89,7 @@ jobs:
       DB_CONNECTION: sqlite
       DB_DATABASE: /tmp/pos-browser.sqlite
       E2E_ADMIN_PASSWORD: BrowserOnlyPassword123
+      PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
@@ -103,7 +107,8 @@ jobs:
           composer install --no-interaction --prefer-dist
           npm ci
           npm run build
-          npx playwright install --with-deps chromium
+          # Ubuntu hosted runners include Chrome; avoid reinstalling OS packages.
+          google-chrome --version
       - name: Prepare disposable browser test database
         run: |
           cp .env.example .env

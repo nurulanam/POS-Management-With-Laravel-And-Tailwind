@@ -11,7 +11,13 @@ export default defineConfig({
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
     },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    projects: [{
+        name: 'chromium',
+        use: {
+            ...devices['Desktop Chrome'],
+            ...(process.env.PLAYWRIGHT_CHROMIUM_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHROMIUM_CHANNEL } : {}),
+        },
+    }],
     webServer: {
         command: 'php artisan serve --host=127.0.0.1 --port=8000',
         url: 'http://127.0.0.1:8000/login',
