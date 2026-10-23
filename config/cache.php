@@ -17,6 +17,9 @@ return [
 
     'default' => env('CACHE_DRIVER', 'file'),
 
+    // Only cache scalar / array payloads unless classes are explicitly allowed.
+    'serializable_classes' => false,
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores

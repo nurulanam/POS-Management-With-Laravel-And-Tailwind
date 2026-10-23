@@ -20,6 +20,9 @@ return [
 
     'driver' => env('SESSION_DRIVER', 'file'),
 
+    // Preserve existing sessions during the upgrade. Switching to JSON logs users out.
+    'serialization' => 'php',
+
     /*
     |--------------------------------------------------------------------------
     | Session Lifetime
