@@ -43,6 +43,7 @@ class BranchManagementTest extends ManagementTestCase
         $this->signIn();
         $this->branch();
         $this->post('/branches', $this->branchData())->assertSessionHasErrors('code');
+        $this->post('/branches', [...$this->branchData(), 'code' => ['invalid']])->assertSessionHasErrors('code');
         $this->post('/branches', [...$this->branchData('NEW'), 'tax_rate' => 101, 'timezone' => 'invalid', 'currency' => 'BAD'])
             ->assertSessionHasErrors(['tax_rate', 'timezone', 'currency']);
         $this->post('/branches', [...$this->branchData('NEW'), 'tax_rate' => '1.999'])->assertSessionHasErrors('tax_rate');

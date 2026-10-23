@@ -120,4 +120,10 @@ class AuthenticationTest extends ManagementTestCase
         $this->assertTrue(Hash::check('PrivatePassword123', $owner->password));
         $this->assertDatabaseCount('branches', 0);
     }
+    public function test_malformed_login_email_is_a_validation_error_not_a_server_error(): void
+    {
+        $this->post('/login', ['email' => ['invalid'], 'password' => 'password'])->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
 }

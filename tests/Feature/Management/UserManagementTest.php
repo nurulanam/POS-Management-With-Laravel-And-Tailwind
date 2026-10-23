@@ -43,6 +43,7 @@ class UserManagementTest extends ManagementTestCase
     {
         $admin = $this->signIn();
         $branch = $this->branch();
+        $this->post('/users', $this->staffData($branch, ['email' => ['invalid']]))->assertSessionHasErrors('email');
         $this->post('/users', $this->staffData($branch, ['role' => 'superuser']))->assertSessionHasErrors('role');
         $this->post('/users', $this->staffData($branch, ['email' => $admin->email]))->assertSessionHasErrors('email');
         $this->post('/users', $this->staffData($branch, ['password' => 'short', 'password_confirmation' => 'short']))->assertSessionHasErrors('password');
