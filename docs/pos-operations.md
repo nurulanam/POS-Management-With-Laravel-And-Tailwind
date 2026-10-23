@@ -1,4 +1,4 @@
-# POS operations: inventory, cash checkout, and receipts
+# POS operations: inventory, cash sales, discounts, and returns
 
 ## What is live
 

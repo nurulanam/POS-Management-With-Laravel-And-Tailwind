@@ -5,6 +5,7 @@ namespace Tests\Feature\Pos;
 use App\Enums\UserRole;
 use App\Models\Refund;
 use App\Models\Sale;
+use App\Support\Money;
 use Illuminate\Support\Str;
 
 class RefundTest extends OperationsTestCase
@@ -30,6 +31,7 @@ class RefundTest extends OperationsTestCase
     {
         [$branch, $product, $sale] = $this->sell(['discount_type' => 'fixed', 'discount_value' => '5.00', 'discount_reason' => 'Promotion']);
         $before = $sale->getAttributes();
+        $product->update(['name' => 'Renamed product', 'price_minor' => 99999, 'is_active' => false]);
         $this->get(route('refunds.create', $sale))->assertOk()->assertSee('Select returned units');
         $this->post(route('refunds.store', $sale), $this->payload($branch, $sale, restock: true))->assertRedirect();
         $refund = Refund::firstOrFail();
@@ -37,6 +39,7 @@ class RefundTest extends OperationsTestCase
         $this->assertSame(75, $refund->tax_minor);
         $this->assertSame(1075, $refund->total_minor);
         $this->assertSame(9, $product->fresh()->stock);
+        $this->assertFalse($product->fresh()->is_active);
         $this->assertDatabaseHas('inventory_movements', ['refund_id' => $refund->id, 'delta' => 1, 'balance' => 9]);
         $this->assertSame($before, $sale->fresh()->getAttributes());
         $this->get(route('refunds.show', $refund))->assertOk()->assertSee('BDT 10.75')->assertSee('Premium Tea');
@@ -190,4 +193,72 @@ class RefundTest extends OperationsTestCase
         $this->get('/refunds?from=2026-10-21&to=2026-10-21')->assertOk()->assertSee($refund->reference)->assertViewHas('total', 2688);
         $this->get('/refunds?from=2026-10-20&to=2026-10-20')->assertDontSee($refund->reference)->assertViewHas('total', 0);
     }
+
+    public function test_refund_key_cannot_be_replayed_by_another_manager(): void
+    {
+        [$branch, $product, $sale] = $this->sell();
+        $payload = $this->payload($branch, $sale, restock: true);
+        $this->post(route('refunds.store', $sale), $payload)->assertRedirect();
+        $manager = $this->signIn(UserRole::Manager);
+        $manager->branches()->attach($branch);
+        $this->post(route('refunds.store', $sale), $payload)->assertForbidden();
+        $this->assertDatabaseCount('refunds', 1);
+        $this->assertSame(9, $product->fresh()->stock);
+    }
+
+    public function test_a_line_from_another_sale_cannot_be_injected_into_a_return(): void
+    {
+        [$branch, $product, $sale] = $this->sell();
+        $this->post('/pos/checkout', $this->payment($branch, $product))->assertRedirect();
+        $other = Sale::orderByDesc('id')->firstOrFail();
+        $data = $this->payload($branch, $other);
+        $this->post(route('refunds.store', $sale), $data)->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('refunds', 0);
+        $this->assertSame(6, $product->fresh()->stock);
+    }
+
+    public function test_maximum_sale_value_allocates_discount_and_tax_without_overflow(): void
+    {
+        $branch = $this->workspace();
+        $first = $this->product($branch, ['price_minor' => 1000000000, 'stock' => 1000]);
+        $second = $this->product($branch, ['price_minor' => 1000000000, 'stock' => 1000]);
+        $data = $this->payment($branch, $first, [
+            'tendered' => '10000000000.00', 'discount_type' => 'fixed',
+            'discount_value' => '3333333333.33', 'discount_reason' => 'High value allocation',
+            'items' => [
+                ['product_id' => $first->id, 'quantity' => 500, 'expected_price_minor' => 1000000000],
+                ['product_id' => $second->id, 'quantity' => 500, 'expected_price_minor' => 1000000000],
+            ],
+        ]);
+        $this->post('/pos/checkout', $data)->assertRedirect();
+        $sale = Sale::firstOrFail();
+        $this->assertSame(1000000000000, $sale->subtotal_minor);
+        $this->assertSame(716666666667, $sale->total_minor);
+        $refund = $this->payload($branch, $sale);
+        $refund['items'] = $sale->items->map(fn ($line) => ['sale_item_id' => $line->id, 'quantity' => 500, 'restock' => true, 'expected_returned' => 0])->all();
+        $this->post(route('refunds.store', $sale), $refund)->assertRedirect();
+        $record = Refund::firstOrFail();
+        $this->assertSame($sale->total_minor, $record->total_minor);
+        $this->assertSame($sale->tax_minor, $record->tax_minor);
+        $this->assertSame($record->total_minor, (int) $record->items()->sum('total_minor'));
+        $this->assertSame(1000, $first->fresh()->stock);
+        $this->assertSame(1000, $second->fresh()->stock);
+    }
+
+    public function test_jpy_returns_use_whole_yen_and_conserve_the_original_payment(): void
+    {
+        $branch = $this->workspace();
+        $branch->update(['currency' => 'JPY']);
+        $product = $this->product($branch, ['price_minor' => 3]);
+        $data = $this->payment($branch, $product, ['tendered' => '10', 'discount_type' => 'fixed', 'discount_value' => '1', 'discount_reason' => 'Promotion']);
+        $data['items'][0]['quantity'] = 3;
+        $this->post('/pos/checkout', $data)->assertRedirect();
+        $sale = Sale::firstOrFail();
+        $this->assertSame(9, $sale->total_minor);
+        $this->post(route('refunds.store', $sale), $this->payload($branch, $sale))->assertRedirect();
+        $this->assertSame('JPY 3', Money::format(Refund::firstOrFail()->total_minor, 'JPY'));
+        $this->post(route('refunds.store', $sale), $this->payload($branch, $sale, 2, returned: 1))->assertRedirect();
+        $this->assertSame(9, (int) $sale->refunds()->sum('total_minor'));
+    }
+
 }
