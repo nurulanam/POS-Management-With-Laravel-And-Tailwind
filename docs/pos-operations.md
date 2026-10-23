@@ -94,9 +94,9 @@ replayed adjustments or overwriting a stock change made since the form was opene
 Completed sales have no update/delete routes. Receipts snapshot item names/SKUs,
 prices, quantities, customer details, branch identity/footer, cashier name,
 currency, timezone, tax rate, and payment amounts. Later catalog/settings edits do
-not rewrite receipts. Sale times are stored in UTC, displayed in the sale's
-snapshot timezone; history date filters and dashboard day boundaries use the
-current branch's timezone.
+not rewrite receipts. Sale times are stored in UTC. Receipts use the sale's snapshot timezone; history
+rows, history date filters, and dashboard day boundaries use the current branch's
+timezone.
 
 ## Setup and operation
 
