@@ -11,7 +11,7 @@
         <dl class="detail-grid"><div><dt>Branch code</dt><dd>{{ $branch->code }}</dd></div><div><dt>Currency</dt><dd>{{ $branch->currency }}</dd></div><div><dt>Timezone</dt><dd>{{ $branch->timezone }}</dd></div><div><dt>Tax setting</dt><dd>{{ $branch->tax_rate }}%</dd></div></dl>
         <div class="panel-bottom"><p class="muted">{{ $branch->address ?: 'An address has not been added yet.' }}</p>@can('manage-business')<a class="text-link" href="{{ route('branches.edit', $branch) }}">Manage branch settings ↗</a>@endcan</div>
     </section>
-    <section class="next-panel"><span class="eyebrow">A SOLID FOUNDATION</span><h2>Ready for<br>what’s next.</h2><p>User access and branch settings are live. Inventory, checkout, and receipts will follow in the next phase.</p><a href="{{ route('pos.preview') }}" class="btn btn-outline">View POS design preview ↗</a><small>Preview only. No transactions are recorded.</small></section>
+    <section class="next-panel"><span class="eyebrow">A SOLID FOUNDATION</span><h2>Ready for<br>what’s next.</h2><p>Your branch is ready for business. Open checkout to record a cash sale, or review your sales and receipts.</p><a href="{{ route('pos.index') }}" class="btn btn-outline">Open point of sale ↗</a><small>Live checkout. Stock updates when a sale completes.</small></section>
 </div>
 @endif
 <div class="section-heading"><h2>Make yourself at home</h2><span class="muted">Quick actions for your role</span></div>

@@ -42,6 +42,9 @@ class BranchController extends Controller
             if ($current->is_active && ! $request->boolean('is_active') && $branches->where('is_active', true)->count() <= 1) {
                 throw ValidationException::withMessages(['is_active' => 'At least one active branch must remain.']);
             }
+            if ($current->currency !== $request->input('currency') && ($current->products()->exists() || $current->sales()->exists())) {
+                throw ValidationException::withMessages(['currency' => 'Currency cannot change after products or sales exist. Use a separate branch for another currency.']);
+            }
             $current->update($request->validated());
         });
 

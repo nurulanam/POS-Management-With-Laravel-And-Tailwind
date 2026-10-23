@@ -1,0 +1,18 @@
+@extends('layouts.management')
+@section('title', $product->exists ? 'Edit product' : 'Add product')
+@section('content')
+<a class="back-link" href="{{ route('products.index') }}">← Back to products</a>
+<div class="page-heading"><div><span class="eyebrow">{{ $currentBranch->name }}</span><h1>{{ $product->exists ? 'Update your catalog.' : 'Something new on the shelf.' }}</h1><p>Prices are exclusive of tax. SKU and barcode must be unique within this branch.</p></div></div>
+<form class="form-layout" method="POST" action="{{ $product->exists ? route('products.update', $product) : route('products.store') }}">
+@csrf @if($product->exists) @method('PUT') @endif
+<input type="hidden" name="branch_id" value="{{ $currentBranch->id }}"><input type="hidden" name="currency" value="{{ $currentBranch->currency }}">
+<div class="form-main"><section class="panel form-stack">
+    <div class="field"><label for="name">Product name *</label><input id="name" name="name" value="{{ old('name', $product->name) }}" required maxlength="255"></div>
+    <div class="form-grid"><div class="field"><label for="sku">SKU *</label><input id="sku" name="sku" value="{{ old('sku', $product->sku) }}" required maxlength="60" pattern="[A-Za-z0-9._-]+"></div><div class="field"><label for="barcode">Barcode</label><input id="barcode" name="barcode" value="{{ old('barcode', $product->barcode) }}" maxlength="80"></div></div>
+    <div class="form-grid"><div class="field"><label for="category">Category</label><input id="category" name="category" value="{{ old('category', $product->category) }}" maxlength="60"></div><div class="field"><label for="price">Selling price ({{ $currentBranch->currency }}) *</label><input id="price" name="price" inputmode="decimal" value="{{ old('price', \App\Support\Money::decimal($product->price_minor, $currentBranch->currency)) }}" required maxlength="20"><small>{{ $currentBranch->currency === 'JPY' ? 'Whole yen only.' : 'Up to two decimal places.' }} Greater than zero, before tax.</small></div></div>
+    <div class="form-grid">@unless($product->exists)<div class="field"><label for="opening_stock">Opening stock *</label><input id="opening_stock" name="opening_stock" type="number" min="0" max="1000000000" step="1" value="{{ old('opening_stock', 0) }}" required></div>@endunless<div class="field"><label for="reorder_level">Low-stock threshold *</label><input id="reorder_level" name="reorder_level" type="number" min="0" max="1000000000" step="1" value="{{ old('reorder_level', $product->reorder_level) }}" required></div></div>
+    <input type="hidden" name="is_active" value="0"><label class="checkbox-card" for="is_active"><input id="is_active" name="is_active" type="checkbox" value="1" @checked(old('is_active', $product->is_active))><span>Available for sale<small>Archive instead of deleting to preserve sale and stock history.</small></span></label>
+</section><div class="form-actions"><a class="btn btn-outline" href="{{ route('products.index') }}">Cancel</a><button class="btn btn-primary">Save product →</button></div></div>
+<aside class="form-help"><span class="eyebrow">EVERY UNIT COUNTS</span><h2>A clear trail.<br>A reliable balance.</h2><p>After creation, stock can only be changed through checkout or a reasoned inventory adjustment. Editing a product does not change old receipts.</p>@if($product->exists)<a class="text-link" href="{{ route('products.show', $product) }}">Adjust stock or view ledger →</a>@endif<p>Branch currency cannot change once products exist, so stored prices cannot accidentally be reinterpreted.</p></aside>
+</form>
+@endsection
