@@ -1,80 +1,144 @@
-# POS Management
+# Sunset Sales · POS Management
 
-## Laravel 13
+A Laravel 13 / Tailwind CSS 4 workspace for a business with multiple branches.
+The current implementation provides **authentication, staff management, branch
+access, and per-branch settings**. Inventory, checkout, sales history, and receipt
+generation are **not implemented yet**. `/pos-preview` preserves the original
+static POS design and is explicitly labeled as a non-transactional preview.
 
-The project uses **Laravel 13.38**, **Tailwind CSS 4**, and **Vite 8**.
-Requirements: **PHP 8.3+**, Composer 2, and **Node 20.19+ (20.x) or 22.12+**.
-Both dependency lockfiles are up to date. Install with `composer install` and
-`npm ci`, then build assets with `npm run build`.
+## Implemented
 
-CI validates dependencies, runs all 10 tests on PHP 8.3 / 8.4 / 8.5, and checks
-migrations, framework caches, and the frontend build. See the
-[upgrade and installation guide](docs/laravel-13-upgrade.md) for verified versions,
-compatibility changes, and deployment notes.
+- Login/logout with login throttling, session regeneration, and active-account checks.
+- Admin-managed staff accounts, search, role/status/branch filters, and pagination.
+- Admin, Manager, and Cashier roles with server-side authorization.
+- Multiple branch assignments per manager/cashier and a validated branch switcher.
+- Read-only team directories scoped to the manager's current assigned branch.
+- Per-branch name, code, contact details, address, currency, timezone, tax-rate
+  setting, and receipt-footer setting, with persistent validation-backed storage.
+- Forced password changes for newly created/reset accounts; self-service password
+  changes require the current password.
+- Deactivation rather than hard deletion. Account updates revoke sessions and API
+  tokens; an old session cannot become valid again after reactivation.
+- Responsive management screens, onboarding/empty states, and validation feedback.
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+### Access model
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is **one business with multiple branches**, not a multi-tenant SaaS platform.
+A user's role is global; managers and cashiers can be assigned to multiple branches.
 
-## About Laravel
+| Capability | Admin | Manager | Cashier |
+| --- | --- | --- | --- |
+| Access active branches | All | Assigned only | Assigned only |
+| View assigned branch overview | Yes | Yes | Yes |
+| View branch team directory | Yes | Assigned branches | No |
+| Create/update/deactivate staff | Yes | No | No |
+| Assign roles and branches | Yes | No | No |
+| Create/update/deactivate branches and settings | Yes | No | No |
+| Change own password | Yes | Yes | Yes |
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+An administrator cannot deactivate or demote their own account. At least one
+active administrator and, once created, one active branch must remain. Staff
+without an active branch assignment see an explanatory empty state rather than
+another branch's data. Branch access is revalidated on every request.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Install and bootstrap
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Requirements: PHP **8.3+**, Composer 2, a supported database, and Node.js
+**20.19+ within 20.x or 22.12+**. CI covers PHP 8.3, 8.4, and 8.5 with Node 22.
+Install Laravel's PHP extensions plus your PDO database driver; tests need
+`pdo_sqlite` and XMLWriter.
 
-## Learning Laravel
+```sh
+composer install
+cp .env.example .env
+php artisan key:generate
+# Configure your database and APP_URL in .env before migrating.
+php artisan migrate
+npm ci
+npm run build
+php artisan pos:create-admin
+php artisan serve
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+`pos:create-admin` prompts for the administrator's name, email, and a hidden,
+confirmed password. There are **no default administrator credentials**, no public
+registration, and no automatically privileged existing users.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+1. Sign in at `/login` using the administrator account you created.
+2. Create the first branch in **Branches & settings**.
+3. Add staff in **User management**, select their role, and assign active branches.
+4. Share each temporary password through a secure channel. Staff must replace it
+   before using the workspace. This phase does not send invitation emails.
+5. For a forgotten password, an admin sets a new temporary password in the staff
+   edit screen. Administrative host access can create an additional admin with
+   the console command if required; existing accounts are not silently promoted.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Upgrading an existing installation
 
-## Laravel Sponsors
+Back up the database and preserve `.env` and `APP_KEY`. Install the committed
+lockfiles, run the **two new staff/branch migrations**, rebuild frontend assets,
+and clear/rebuild configuration, route, and view caches. Existing users default
+to **Cashier**, keep their current active status/password, and have **no branch
+assignments** until an administrator assigns them. Create an initial administrator
+with `pos:create-admin`; choose an email not already used by an existing account.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+Use HTTPS and appropriate secure session-cookie configuration in production.
+Validate the deployment on staging with your real database before rollout.
 
-### Premium Partners
+## Tests
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```sh
+composer validate --strict
+composer check-platform-reqs
+composer audit
+php artisan config:clear
+php artisan test
+npm audit
+npm run build
+```
 
-## Contributing
+PHPUnit uses an in-memory SQLite database and test-only encryption key. Coverage
+includes branch isolation, role escalation attempts, account/session revocation,
+password changes, admin setup, settings validation, and the original Sanctum /
+request-forgery regression tests. CI also checks native PHP syntax, migrations,
+and framework caches.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Browser acceptance tests
 
-## Code of Conduct
+Playwright exercises the real Laravel server and production assets: admin branch
+and staff creation, settings persistence, first-login password changes, manager
+branch isolation, authorization failures, and mobile cashier navigation.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Use a **dedicated disposable database**. Never use production data or credentials
+with the browser fixture seeder. A testing environment alone does not make an
+existing database safe to use.
 
-## Security Vulnerabilities
+```sh
+# Use these environment variables only for this disposable test session.
+export APP_ENV=testing
+export APP_URL=http://127.0.0.1:8000
+export DB_CONNECTION=sqlite
+export DB_DATABASE=/tmp/sunset-browser.sqlite
+export E2E_ADMIN_PASSWORD="$(openssl rand -hex 24)"
+touch "$DB_DATABASE"
+php artisan config:clear
+php artisan migrate
+php artisan db:seed --class=BrowserTestSeeder
+npm run build
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The browser fixture seeder refuses to run unless `APP_ENV=testing` and
+`E2E_ADMIN_PASSWORD` are set. It is not called by the default database seeder.
+Playwright starts and stops the local Laravel server itself. Use a fresh disposable
+SQLite file when repeating the fixture setup. Traces and screenshots are excluded
+from Git.
 
-## License
+## Dependency upgrade history
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`composer.lock` resolves Laravel **13.38.0**; both lockfiles are committed. Use
+`composer install` / `npm ci` for reproducible installations. See
+[the Laravel 13 upgrade notes](docs/laravel-13-upgrade.md) for the framework and
+frontend migration history. The staff/branch migrations above are a subsequent
+feature addition, not part of that earlier dependency-only upgrade.

@@ -28,7 +28,7 @@ class StaffRequest extends FormRequest
             'role' => ['required', Rule::enum(UserRole::class)],
             'is_active' => ['required', 'boolean'],
             'password' => [$this->isMethod('post') ? 'required' : 'nullable', 'confirmed', Password::min(12)->letters()->numbers(), 'max:72'],
-            'branch_ids' => [Rule::requiredIf($this->input('role') !== UserRole::Admin->value), 'array'],
+            'branch_ids' => [Rule::requiredIf($this->input('role') !== UserRole::Admin->value && $this->boolean('is_active')), 'array'],
             'branch_ids.*' => ['integer', 'distinct', Rule::exists('branches', 'id')->where('is_active', true)],
         ];
     }

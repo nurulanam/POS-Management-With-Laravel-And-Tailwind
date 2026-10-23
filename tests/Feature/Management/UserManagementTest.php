@@ -110,4 +110,17 @@ class UserManagementTest extends ManagementTestCase
         $this->get('/')->assertRedirect('/account/password');
         $this->get('/account/password')->assertOk();
     }
+    public function test_unassigned_staff_can_be_deactivated_but_not_reactivated_without_a_branch(): void
+    {
+        $this->signIn();
+        $staff = User::factory()->create();
+        $data = [
+            'name' => $staff->name, 'email' => $staff->email, 'role' => 'cashier',
+            'is_active' => false, 'branch_ids' => [],
+        ];
+        $this->put(route('users.update', $staff), $data)->assertRedirect('/users');
+        $this->assertFalse($staff->fresh()->is_active);
+        $this->put(route('users.update', $staff), [...$data, 'is_active' => true])->assertSessionHasErrors('branch_ids');
+    }
+
 }

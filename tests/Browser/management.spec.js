@@ -32,7 +32,7 @@ test('admin creates a branch, edits settings, and adds a staff member who change
     await page.getByRole('link', { name: '+ Add staff member' }).click();
     await page.getByLabel('Full name').fill('Nadia Rahman');
     await page.getByLabel('Email address').fill('nadia@example.test');
-    await page.getByLabel('Role', { exact: true }).selectOption('cashier');
+    await page.getByLabel('Role', { exact: false }).selectOption('cashier');
     await page.getByRole('checkbox', { name: /Gulshan Store/ }).check();
     await page.getByLabel('Temporary password', { exact: false }).fill('NadiaTemporary123');
     await page.getByLabel('Confirm password').fill('NadiaTemporary123');
