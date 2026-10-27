@@ -31,7 +31,7 @@ if (refundForm) {
         document.getElementById('refund-tax').textContent = money(tax);
         document.getElementById('refund-total').textContent = money(subtotal + tax);
         document.getElementById('refund-message').textContent = !valid ? 'Check return quantities.' : count ? `${count} units selected. Unchecked items will not be restocked.` : 'Choose at least one unit.';
-        submit.disabled = submitting || !valid || !count || !confirmation.checked;
+        submit.disabled = (config.cashSessionRequired && !config.cashSessionId) || submitting || !valid || !count || !confirmation.checked;
     }
     refundForm.addEventListener('input', update);
     refundForm.addEventListener('change', update);

@@ -63,7 +63,7 @@ if (app) {
         const cash = parseAmount(tender.value, config.precision);
         document.getElementById('cart-change').textContent = cash === null ? 'Enter cash received' : cash < total ? `Short ${amount(total - cash)}` : amount(cash - total);
         const invalidStock = [...cart.values()].some(item => item.quantity > item.stock);
-        submit.disabled = submitting || cart.size === 0 || cash === null || cash < total || cash > 2000000000000n || subtotal > 1000000000000n || invalidStock || Boolean(discountError);
+        submit.disabled = (config.cashSessionRequired && !config.cashSessionId) || submitting || cart.size === 0 || cash === null || cash < total || cash > 2000000000000n || subtotal > 1000000000000n || invalidStock || Boolean(discountError);
         notice.textContent = discountError || (!cart.size ? 'Your cart is empty. Choose a product to begin.' : invalidStock ? 'Some quantities exceed available stock. Reduce them before checkout.' : `${cart.size} product${cart.size === 1 ? '' : 's'} in this sale.`);
     }
     function renderCart() {

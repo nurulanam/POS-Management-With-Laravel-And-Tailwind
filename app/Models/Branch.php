@@ -14,7 +14,7 @@ class Branch extends Model
         'currency', 'timezone', 'tax_rate', 'receipt_footer',
     ];
 
-    protected $casts = ['is_active' => 'boolean', 'tax_rate' => 'decimal:2'];
+    protected $casts = ['is_active' => 'boolean', 'cash_tracking_enabled' => 'boolean', 'tax_rate' => 'decimal:2'];
 
     public function users(): BelongsToMany
     {
@@ -45,4 +45,9 @@ class Branch extends Model
     {
         return $this->hasMany(Refund::class);
     }
+    public function cashSessions(): HasMany
+    {
+        return $this->hasMany(CashSession::class);
+    }
+
 }

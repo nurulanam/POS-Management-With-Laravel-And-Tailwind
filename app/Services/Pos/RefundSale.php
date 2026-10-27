@@ -31,7 +31,9 @@ class RefundSale
             if ($items->isEmpty()) {
                 throw ValidationException::withMessages(['items' => 'Choose at least one unit to return.']);
             }
-            $hash = hash('sha256', json_encode([$sale->id, $data['reason'], $items->all()], JSON_THROW_ON_ERROR));
+            $hashData = [$sale->id, $data['reason'], $items->all()];
+            if (! empty($data['cash_session_id'])) $hashData[] = ['cash_session', (int) $data['cash_session_id']];
+            $hash = hash('sha256', json_encode($hashData, JSON_THROW_ON_ERROR));
             $existing = $branch->refunds()->where('idempotency_key', $data['idempotency_key'])->first();
             if ($existing) {
                 abort_unless($existing->user_id === $actor->id, 403);
@@ -39,6 +41,8 @@ class RefundSale
 
                 return $existing;
             }
+            $drawer = app(CashDrawer::class);
+            $cashSession = $drawer->forPayment($branch, $actor, $data);
             $quote = app(ReturnQuote::class)->lines($sale);
             $products = Product::where('branch_id', $branch->id)->whereIn('id', array_column($quote, 'product_id'))
                 ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
@@ -68,11 +72,13 @@ class RefundSale
                 }
             }
             $refund = $branch->refunds()->create([
+                'cash_session_id' => $cashSession?->id,
                 'sale_id' => $sale->id, 'user_id' => $actor->id, 'staff_name' => $actor->name,
                 'reference' => 'R-'.Str::ulid(), 'idempotency_key' => $data['idempotency_key'], 'request_hash' => $hash,
                 'reason' => $data['reason'], 'currency' => $sale->currency, 'timezone' => $branch->timezone,
                 'subtotal_minor' => $base, 'tax_minor' => $tax, 'total_minor' => $base + $tax, 'refunded_at' => now('UTC'),
             ]);
+            if ($cashSession) $drawer->append($cashSession, $actor, -($base + $tax), 'refund', 'Refund '.$refund->reference, ['refund_id' => $refund->id]);
             $refund->items()->createMany($lines);
             foreach ($restocks as $id => $quantity) {
                 $product = $products[$id];

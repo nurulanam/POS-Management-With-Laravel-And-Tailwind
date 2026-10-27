@@ -18,6 +18,7 @@
                 <a @class(['selected' => request()->routeIs('pos.index')]) href="{{ route('pos.index') }}"><span aria-hidden="true">▦</span> Point of sale</a>
                 <a @class(['selected' => request()->routeIs('sales.*')]) href="{{ route('sales.index') }}"><span aria-hidden="true">≡</span> Sales & receipts</a>
                 <a @class(['selected' => request()->routeIs('refunds.*')]) href="{{ route('refunds.index') }}"><span aria-hidden="true">↶</span> Refunds & returns</a>
+                <a href="{{ route('cash.index') }}" @class(['selected' => request()->routeIs('cash.*')])><span aria-hidden="true">▣</span> Cash drawers</a>
                 <a @class(['selected' => request()->routeIs('customers.*')]) href="{{ route('customers.index') }}"><span aria-hidden="true">♧</span> Customers</a>
                 @can('manage-inventory')
                     <a @class(['selected' => request()->routeIs('products.*')]) href="{{ route('products.index') }}"><span aria-hidden="true">▣</span> Products & stock</a>

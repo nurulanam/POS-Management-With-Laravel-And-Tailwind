@@ -34,6 +34,7 @@ class Checkout
             if ($discountType !== 'none') {
                 $hashData[] = [$discountType, $discountValue, $data['discount_reason']];
             }
+            if (! empty($data['cash_session_id'])) $hashData[] = ['cash_session', (int) $data['cash_session_id']];
             $hash = hash('sha256', json_encode($hashData, JSON_THROW_ON_ERROR));
             $existing = $branch->sales()->where('idempotency_key', $data['idempotency_key'])->first();
             if ($existing) {
@@ -42,6 +43,8 @@ class Checkout
 
                 return $existing;
             }
+            $drawer = app(CashDrawer::class);
+            $cashSession = $drawer->forPayment($branch, $actor, $data);
             if ($branch->currency !== $data['currency'] || $taxRate !== (int) $data['expected_tax_basis_points']) {
                 throw ValidationException::withMessages(['items' => 'Branch pricing settings changed. Reload checkout and review the new totals.']);
             }
@@ -85,6 +88,7 @@ class Checkout
                 throw ValidationException::withMessages(['tendered' => 'Cash received must cover the total of '.Money::format($total, $branch->currency).'.']);
             }
             $sale = $branch->sales()->create([
+                'cash_session_id' => $cashSession?->id,
                 'user_id' => $actor->id, 'customer_id' => $customer?->id,
                 'reference' => 'S-'.Str::ulid(), 'idempotency_key' => $data['idempotency_key'], 'request_hash' => $hash,
                 'currency' => $branch->currency, 'timezone' => $branch->timezone, 'tax_basis_points' => $taxRate,
@@ -99,6 +103,7 @@ class Checkout
                 'customer_snapshot' => $customer?->only(['name', 'phone', 'email', 'address']),
                 'cashier_name' => $actor->name, 'paid_at' => now('UTC'),
             ]);
+            if ($cashSession) $drawer->append($cashSession, $actor, $total, 'sale', 'Sale '.$sale->reference, ['sale_id' => $sale->id]);
             $sale->items()->createMany($lines);
             foreach ($items as $item) {
                 $product = $products->get($item['product_id']);

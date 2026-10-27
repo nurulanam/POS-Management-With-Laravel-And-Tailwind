@@ -1,0 +1,27 @@
+@extends('layouts.management')
+@section('title', 'Cash drawers')
+@section('content')
+<div class="page-heading"><div><span class="eyebrow">{{ $currentBranch->name }} · CASH CONTROL</span><h1>Count it. Close with confidence.</h1><p>One open till per person, per branch. Cashiers see only their own sessions; managers can reconcile the branch.</p></div><a class="btn btn-outline" href="{{ route('pos.index') }}">Point of sale →</a></div>
+@if(!$currentBranch->cash_tracking_enabled)
+<section class="panel section-gap"><h2>Start tracking cash in this branch</h2><p class="muted section-gap">Tracking is currently off. Enabling it requires an open personal till for every new cash sale and refund. Existing transactions stay unassigned. Enabling cannot be undone through the application.</p>
+@can('manage-cash')
+<form method="POST" action="{{ route('cash.enable') }}" class="cash-operation section-gap">@csrf<input type="hidden" name="branch_id" value="{{ $currentBranch->id }}"><label class="checkbox-card"><input type="checkbox" name="confirmed" value="1" required><span>I have coordinated the change with branch staff and understand that new cash transactions will require an open till.</span></label><button class="btn btn-primary section-gap">Enable cash tracking</button></form>
+@else
+<p class="muted">Ask a manager or administrator to enable cash tracking.</p>
+@endcan
+</section>
+@elseif($openSession)
+<section class="panel section-gap"><span class="eyebrow">YOUR OPEN TILL</span><h2>{{ $openSession->reference }}</h2><p class="muted section-gap">Expected cash: {{ \App\Support\Money::format($openSession->expected_minor, $openSession->currency) }}</p><a class="btn btn-primary section-gap" href="{{ route('cash.show', $openSession) }}">View till & close →</a></section>
+@else
+<section class="panel section-gap"><h2>Open your till</h2><p class="muted section-gap">Count the physical opening float. No balance is carried forward automatically from an earlier session. Keep your cash separate from other operators' tills.</p><form method="POST" action="{{ route('cash.store') }}" class="cash-operation section-gap">@csrf<input type="hidden" name="branch_id" value="{{ $currentBranch->id }}"><input type="hidden" name="currency" value="{{ $currentBranch->currency }}"><input type="hidden" name="idempotency_key" value="{{ $openingKey }}"><div class="field"><label for="opening">Opening cash ({{ $currentBranch->currency }})</label><input id="opening" name="opening" inputmode="decimal" maxlength="20" required value="{{ old('opening') }}"></div><label class="checkbox-card"><input type="checkbox" name="confirmed" value="1" required><span>I counted this opening cash and will use this personal till for cash transactions.</span></label><button class="btn btn-primary section-gap">Open till</button></form></section>
+@endif
+<section class="panel table-panel section-gap"><div class="panel-heading"><h2>Session history</h2><span class="muted">Dates use {{ $currentBranch->timezone }}</span></div>
+<form class="filter-bar" method="GET"><div class="field"><label for="status">Status</label><select id="status" name="status"><option value="">All sessions</option value="open" @selected(request('status') === 'open')>Open</option><option value="closed" @selected(request('status') === 'closed')>Closed</option><option value="pending" @selected(request('status') === 'pending')>Variance awaiting review</option><option value="reviewed" @selected(request('status') === 'reviewed')>Reviewed</option></select></div><div class="field"><label for="basis">Date basis</label><select id="basis" name="basis"><option value="opened" @selected(request('basis', 'opened') === 'opened')>Opened date</option><option value="closed" @selected(request('basis') === 'closed')>Closed date</option></select></div><div class="field"><label for="from">From date</label><input id="from" type="date" name="from" value="{{ request('from') }}"></div><div class="field"><label for="to">Through date</label><input id="to" type="date" name="to" value="{{ request('to') }}"></div><button class="btn btn-dark">Filter</button><a class="text-link" href="{{ route('cash.index') }}">Clear</a></form>
+<div class="table-scroll"><table class="data-table"><thead><tr><th>Till / owner</th><th>Opened / closed</th><th>Expected / counted</th><th>Variance</th><th>Status</th></tr></thead><tbody>
+@forelse($sessions as $session)
+<tr><td><a class="text-link receipt-ref" href="{{ route('cash.show', $session) }}">{{ $session->reference }} ↗</a><small class="table-note">{{ $session->owner_name }}</small></td><td>{{ $session->opened_at->setTimezone($currentBranch->timezone)->format('d M Y H:i') }}<small class="table-note">{{ $session->closed_at?->setTimezone($currentBranch->timezone)->format('d M Y H:i') ?? 'Still open' }}</small></td><td>{{ \App\Support\Money::format($session->expected_minor, $session->currency) }}<small class="table-note">Counted {{ $session->counted_minor === null ? '—' : \App\Support\Money::format($session->counted_minor, $session->currency) }}</small></td><td>{{ $session->variance_minor === null ? '—' : \App\Support\Money::format($session->variance_minor, $session->currency) }}</td><td>@include('cash.status')</td></tr>
+@empty
+<tr><td colspan="5"><div class="empty-state"><h2>No matching sessions</h2><p>Open a till or adjust the history filters.</p></div></td></tr>
+@endforelse
+</tbody></table></div><div class="pagination-area">{{ $sessions->links() }}</div></section>
+@endsection

@@ -1,0 +1,1 @@
+<span class="badge {{ !$session->closed_at || ($session->variance_minor && !$session->reviewed_at) ? 'badge-warning' : 'badge-positive' }}">{{ !$session->closed_at ? 'Open' : ($session->variance_minor ? ($session->reviewed_at ? 'Variance reviewed' : 'Awaiting variance review') : 'Closed · Balanced') }}</span>
