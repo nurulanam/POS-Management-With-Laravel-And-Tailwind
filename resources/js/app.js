@@ -9,3 +9,5 @@ import './pos';
 import './refunds';
 
 import './cash';
+
+import './purchasing';

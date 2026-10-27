@@ -291,3 +291,12 @@
 .cash-note p { margin: 8px 0 15px; font-size: 12px; }
 .cash-reconciliation .grand-total { flex-wrap: wrap; }
 @media (max-width: 760px) { .cash-reconciliation .receipt-meta > div { flex-wrap: wrap; } }
+
+.purchase-catalog { display: flex; flex-wrap: wrap; gap: 10px; max-height: 290px; overflow-y: auto; margin-top: 14px; }
+.purchase-catalog .btn { white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.purchase-line { padding: 22px 0; border-bottom: 1px solid #e3e7e1; overflow-wrap: anywhere; }
+.purchase-line .form-grid { margin-top: 16px; }
+.purchase-summary { position: sticky; top: 25px; }
+.purchase-summary .grand-total { flex-wrap: wrap; }
+@media (max-width: 1100px) { .purchase-summary { position: static; } }
+@media (max-width: 760px) { #purchase-receive-form .panel-heading { flex-direction: column; } }

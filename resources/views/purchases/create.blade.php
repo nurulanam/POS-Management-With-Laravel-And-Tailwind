@@ -1,0 +1,17 @@
+@extends('layouts.management')
+@section('title', 'New purchase order')
+@section('content')
+<a class="back-link" href="{{ route('purchases.index') }}">← Purchasing</a>
+<div class="page-heading"><div><span class="eyebrow">{{ $currentBranch->name }} · {{ $currentBranch->currency }}</span><h1>Plan the next delivery.</h1><p>Enter agreed unit costs, not selling prices. Saving finalizes the order; quantities and costs cannot be edited afterward.</p></div></div>
+@if($suppliers->isEmpty())<div class="info-strip">Add an active <a class="text-link" href="{{ route('suppliers.create') }}">supplier</a> before ordering.</div>@endif
+<noscript><div class="notice notice-error">Enable JavaScript to build and review a purchase order.</div></noscript>
+<form id="purchase-form" class="form-layout" method="POST" action="{{ route('purchases.store') }}" data-config="{{ json_encode($config) }}">@csrf
+<input type="hidden" name="branch_id" value="{{ $currentBranch->id }}"><input type="hidden" name="currency" value="{{ $currentBranch->currency }}"><input type="hidden" name="idempotency_key" value="{{ $orderKey }}">
+<div class="form-main"><section class="panel"><div class="field"><label for="supplier_id">Supplier *</label><select id="supplier_id" name="supplier_id" required><option value="">Choose an active supplier</option>@foreach($suppliers as $supplier)<option value="{{ $supplier->id }}" @selected((string) old('supplier_id') === (string) $supplier->id)>{{ $supplier->name }} · {{ $supplier->code }}</option>@endforeach</select></div>
+<div class="form-grid"><div class="field"><label for="supplier_reference">Supplier / quotation reference</label><input id="supplier_reference" name="supplier_reference" maxlength="100" value="{{ old('supplier_reference') }}"></div><div class="field"><label for="expected_on">Expected delivery date</label><input id="expected_on" type="date" name="expected_on" value="{{ old('expected_on') }}"></div></div>
+<div class="field"><label for="purchase-search">Find a product to order</label><input id="purchase-search" maxlength="100" placeholder="Search name, SKU, or barcode" autocomplete="off"></div><p id="purchase-catalog-message" class="muted" role="status"></p><div id="purchase-catalog" class="purchase-catalog"></div></section>
+<section class="panel"><h2>Order lines</h2><div id="purchase-lines"></div><p id="purchase-message" class="muted section-gap" role="status">Add at least one product.</p></section>
+<section class="panel"><div class="field"><label for="notes">Order notes</label><textarea id="notes" name="notes" maxlength="1000" rows="3">{{ old('notes') }}</textarea></div><label class="checkbox-card"><input id="purchase-confirmed" type="checkbox" name="confirmed" value="1" required><span>I checked the supplier, quantities, and unit costs. This order cannot be edited after saving.</span></label></section></div>
+<aside class="panel purchase-summary"><span class="eyebrow">ORDERED GOODS ONLY</span><h2>Order summary</h2><dl class="cart-totals"><div class="grand-total"><dt>Goods value</dt><dd id="purchase-total">—</dd></div></dl><button id="purchase-submit" class="btn btn-primary btn-block" disabled>Create purchase order</button><p class="muted section-gap">No stock or cash changes now. Tax, freight, fees, supplier payments, and accounting valuation are not included.</p><p class="muted section-gap">Whole units only, up to 100 products. Zero-cost goods are allowed. This does not email the supplier; print or share the saved order through your normal process.</p></aside>
+</form>
+@endsection

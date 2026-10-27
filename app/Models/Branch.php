@@ -50,4 +50,10 @@ class Branch extends Model
         return $this->hasMany(CashSession::class);
     }
 
+    public function suppliers(): HasMany { return $this->hasMany(Supplier::class); }
+
+    public function purchaseOrders(): HasMany { return $this->hasMany(PurchaseOrder::class); }
+
+    public function purchaseReceipts(): HasMany { return $this->hasMany(PurchaseReceipt::class); }
+
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Pos\CheckoutController;
 use App\Http\Controllers\Pos\SaleController;
 use App\Http\Controllers\Pos\RefundController;
 use App\Http\Controllers\Pos\CashSessionController;
+use App\Http\Controllers\Purchasing\{SupplierController, PurchaseOrderController, PurchaseReceiptController};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -29,6 +30,18 @@ Route::middleware(['auth', 'active', 'auth.session'])->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::post('/branch/switch', BranchSwitchController::class)->name('branch.switch');
         Route::middleware('operational.branch')->group(function () {
+            Route::middleware('can:manage-purchasing')->group(function () {
+                Route::resource('suppliers', SupplierController::class)->except(['show', 'destroy']);
+                Route::get('/purchases', [PurchaseOrderController::class, 'index'])->name('purchases.index');
+                Route::get('/purchases/create', [PurchaseOrderController::class, 'create'])->name('purchases.create');
+                Route::post('/purchases', [PurchaseOrderController::class, 'store'])->name('purchases.store');
+                Route::get('/purchases/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('purchases.show');
+                Route::post('/purchases/{purchaseOrder}/close', [PurchaseOrderController::class, 'close'])->name('purchases.close');
+                Route::get('/purchases/{purchaseOrder}/receive', [PurchaseReceiptController::class, 'create'])->name('purchases.receive');
+                Route::post('/purchases/{purchaseOrder}/receive', [PurchaseReceiptController::class, 'store'])->name('purchases.receive.store');
+                Route::get('/purchase-receipts', [PurchaseReceiptController::class, 'index'])->name('purchase-receipts.index');
+                Route::get('/purchase-receipts/{purchaseReceipt}', [PurchaseReceiptController::class, 'show'])->name('purchase-receipts.show');
+            });
             Route::get('/cash-sessions', [CashSessionController::class, 'index'])->name('cash.index');
             Route::post('/cash-sessions/enable', [CashSessionController::class, 'enable'])->middleware('can:manage-cash')->name('cash.enable');
             Route::post('/cash-sessions', [CashSessionController::class, 'store'])->name('cash.store');
