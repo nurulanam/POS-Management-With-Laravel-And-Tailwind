@@ -26,7 +26,7 @@ workspace. The old `/pos-preview` route remains a design-only prototype; the new
 This phase does **not** charge payment cards, initiate mobile payments, or connect
 to a payment provider. Cashiers must physically verify cash before confirming.
 It does not implement refund reversal, voids, credit sales, fractional stock,
-product variants, purchasing, transfers, fiscal-device integrations, or statutory
+product variants, supplier payments, transfers, fiscal-device integrations, or statutory
 tax filing. Printed receipts are application sale records, not a guarantee of
 compliance with any jurisdiction's tax-invoice requirements.
 
@@ -166,6 +166,13 @@ returning one then one refunds BDT 9.68 then BDT 9.67.
 - Times are stored in UTC. Ledger date boundaries use the current branch timezone;
   refund receipts retain the processing timezone and original-sale identity.
 
+## Purchasing
+
+Use **Suppliers** and **Purchasing** for supplier deliveries rather than generic
+stock adjustments. Purchase orders support partial receiving and closing short,
+with original costs and traceable goods receipts. No supplier payments or cash
+movements are recorded. See [purchasing operations](purchasing.md).
+
 ## Setup and operation
 
 1. Back up your database and deploy the code with the existing `.env`/`APP_KEY`.
@@ -206,6 +213,6 @@ product edits do not alter the receipt. It also applies a discount, checks two
 partial-return previews against server totals, restocks only selected units, and
 prints both receipt types. See the README for safe test setup.
 
-CI also runs the PHP regression suite against MySQL 8.4. The thirteen forked concurrency
+CI also runs the PHP regression suite against MySQL 8.4. The twenty forked concurrency
 tests are intentionally skipped in SQLite jobs and executed on MySQL with `pcntl`.
 The MySQL service and its fixed test credentials are ephemeral CI fixtures only.

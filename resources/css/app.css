@@ -300,3 +300,5 @@
 .purchase-summary .grand-total { flex-wrap: wrap; }
 @media (max-width: 1100px) { .purchase-summary { position: static; } }
 @media (max-width: 760px) { #purchase-receive-form .panel-heading { flex-direction: column; } }
+
+.purchase-document .grand-total { flex-wrap: wrap; }

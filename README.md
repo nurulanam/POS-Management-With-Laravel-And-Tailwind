@@ -2,7 +2,7 @@
 
 A Laravel 13 / Tailwind CSS 4 workspace for a business with multiple branches.
 The application provides **staff management, branch settings, products and stock,
-customers, cash checkout, discounts, returns, till reconciliation, and printable receipts**. `/pos` is live
+customers, cash checkout, discounts, returns, till reconciliation, purchasing, and printable receipts**. `/pos` is live
 checkout; `/pos-preview` preserves the old static design and remains explicitly
 labeled as non-transactional. See [POS operations](docs/pos-operations.md) for
 pricing, tax, permissions, transaction safety, and current limits.
@@ -22,6 +22,8 @@ pricing, tax, permissions, transaction safety, and current limits.
 - Partial/full cash refunds, optional restocking, separate refund receipts and ledger.
 - Opt-in per-branch personal tills, cash-in/out ledger, immutable closing counts,
   and manager-reviewed variances. See [cash drawers](docs/cash-drawers.md) for rollout.
+- Branch-local suppliers, immutable purchase orders, partial/full receiving, and
+  stock-linked goods receipts. See [purchasing operations](docs/purchasing.md).
 - Net retained sales history and today's sales/refund activity, plus low-stock counts.
 
 Stock transfers, card/mobile integrations, refund reversal, and fractional-unit
@@ -98,7 +100,7 @@ registration, and no automatically privileged existing users.
 ### Upgrading an existing installation
 
 Back up the database and preserve `.env` and `APP_KEY`. Install the committed
-lockfiles, run all pending migrations, including the **POS operations, discounts/refunds, and cash-drawer migrations**, rebuild frontend assets,
+lockfiles, run all pending migrations, including the **POS operations, discounts/refunds, cash-drawer, and purchasing migrations**, rebuild frontend assets,
 and clear/rebuild configuration, route, and view caches. Existing users default
 to **Cashier**, keep their current active status/password, and have **no branch
 assignments** until an administrator assigns them. Create an initial administrator
@@ -125,9 +127,9 @@ password changes, admin setup, settings validation, and the original Sanctum /
 request-forgery regression tests. CI also checks native PHP syntax, migrations,
 and framework caches. Adjustment tests cover authorization, exact-cent allocations,
 partial returns, stale quotes, duplicate refunds, restock limits, and net reporting.
-MySQL CI additionally runs thirteen real parallel tests for checkout overselling/replay,
+MySQL CI additionally runs twenty real parallel tests for checkout overselling/replay,
 refund over-return/replay/staleness, stock consistency, till open/close replay,
-and payments racing till closure.
+payments racing till closure, and purchasing/receiving races.
 These concurrency tests are intentionally skipped on SQLite.
 
 ### Browser acceptance tests
@@ -137,7 +139,7 @@ and staff creation, settings persistence, first-login password changes, manager
 branch isolation, authorization failures, mobile cashier navigation, product and
 customer creation, cash checkout, discounts, partial/full returns, optional
 restocking, till activation and reconciliation, variance review, print styling,
-stock adjustments, and receipt preservation.
+stock adjustments, supplier ordering/receiving, and receipt preservation.
 
 Use a **dedicated disposable database**. Never use production data or credentials
 with the browser fixture seeder. A testing environment alone does not make an

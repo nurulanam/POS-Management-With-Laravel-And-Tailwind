@@ -161,7 +161,7 @@ mobile layout, print styling, and closed-till checkout blocking.
 
 Seven new real MySQL/pcntl races cover competing/duplicate opens, duplicate cash
 movements, competing/duplicate closes, and checkout/refund versus closing. These
-join the six existing checkout/refund races. They intentionally skip on SQLite;
+join the six checkout/refund races; purchasing adds seven more. They intentionally skip on SQLite;
 the MySQL CI job rejects skipped tests.
 
 Pre-PR regression coverage also includes tampered accounting fields, permissions
