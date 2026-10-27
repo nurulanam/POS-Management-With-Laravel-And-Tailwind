@@ -276,4 +276,55 @@ class CashDrawerTest extends OperationsTestCase
         $this->get('/cash-sessions?basis=opened&from=2026-10-28&to=2026-10-28')->assertOk()->assertDontSee($session->reference);
         $this->get('/cash-sessions?status=pending')->assertOk()->assertDontSee($session->reference);
     }
+
+    public function test_refund_uses_the_paying_managers_till_not_the_original_cashiers(): void
+    {
+        [$branch, $cashierTill] = $this->setupTill(role: UserRole::Cashier);
+        $product = $this->product($branch);
+        $this->post('/pos/checkout', $this->payment($branch, $product, ['cash_session_id' => $cashierTill->id]))->assertRedirect();
+        $sale = Sale::firstOrFail();
+        $manager = $this->signIn(UserRole::Manager);
+        $manager->branches()->attach($branch);
+        $this->post('/cash-sessions', $this->opening($branch))->assertRedirect();
+        $managerTill = CashSession::orderByDesc('id')->firstOrFail();
+        $this->post(route('refunds.store', $sale), $this->returning($branch, $managerTill, $sale))->assertRedirect();
+        $this->assertSame(12688, $cashierTill->fresh()->expected_minor);
+        $this->assertSame(8656, $managerTill->fresh()->expected_minor);
+        $this->assertSame($managerTill->id, Refund::firstOrFail()->cash_session_id);
+        $data = $this->opening($branch);
+        $data['idempotency_key'] = $cashierTill->opening_key;
+        $this->post('/cash-sessions', $data)->assertForbidden();
+    }
+
+    public function test_zero_cash_transactions_still_invalidate_a_closing_quote(): void
+    {
+        [$branch, $session] = $this->setupTill('0');
+        $close = $this->closing($branch, $session, '0');
+        $product = $this->product($branch);
+        $this->post('/pos/checkout', $this->payment($branch, $product, [
+            'cash_session_id' => $session->id, 'tendered' => '0',
+            'discount_type' => 'percent', 'discount_value' => '100', 'discount_reason' => 'Complimentary goods',
+        ]))->assertRedirect();
+        $this->assertSame(0, $session->fresh()->expected_minor);
+        $this->post(route('cash.close', $session), $close)->assertSessionHasErrors('expected_version');
+        $sale = Sale::firstOrFail();
+        $this->post(route('refunds.store', $sale), $this->returning($branch, $session, $sale))->assertRedirect();
+        $this->assertSame(2, $session->fresh()->version);
+        $this->post(route('cash.close', $session), $this->closing($branch, $session->fresh(), '0'))->assertRedirect();
+        $this->post(route('cash.review', $session), ['branch_id' => $branch->id, 'idempotency_key' => $this->key(), 'note' => 'Nothing missing', 'confirmed' => 1])->assertSessionHasErrors('note');
+        $this->assertDatabaseCount('cash_entries', 2);
+    }
+
+
+    public function test_branch_deactivation_requires_open_tills_to_be_closed_first(): void
+    {
+        [$branch, $session] = $this->setupTill();
+        $this->branch('OTHER');
+        $data = [...$this->branchData($branch->code), 'is_active' => false];
+        $this->put(route('branches.update', $branch), $data)->assertSessionHasErrors(['is_active' => 'Close all open tills before deactivating this branch.']);
+        $this->post(route('cash.close', $session), $this->closing($branch, $session))->assertRedirect();
+        $this->put(route('branches.update', $branch), $data)->assertRedirect();
+        $this->assertFalse($branch->fresh()->is_active);
+    }
+
 }

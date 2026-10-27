@@ -7,7 +7,7 @@ use App\Models\User;
 
 class BranchLock
 {
-    // All stock, catalog, customer and checkout writes lock this row first.
+    // All stock, catalog, customer, payment and cash-session writes lock this row first.
     // This serializes competing branch writes on MySQL/PostgreSQL.
     public static function acquire(Branch $branch, User $actor): Branch
     {

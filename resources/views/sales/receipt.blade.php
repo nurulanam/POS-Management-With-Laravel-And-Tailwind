@@ -3,6 +3,7 @@
 @section('content')
 <div class="page-heading no-print"><div><span class="eyebrow">SALE COMPLETED</span><h1>A record you can rely on.</h1><p>Saved sale details. Later changes to products, customers, or settings do not change this receipt.</p></div><div class="table-actions"><a class="btn btn-outline" href="{{ route('sales.index') }}">Sales history</a><a class="btn btn-outline" href="{{ route('pos.index') }}">New sale</a><button type="button" class="btn btn-primary" data-print-receipt>Print receipt</button></div></div>
 <section class="panel no-print return-summary">
+@if($sale->cash_session_id)<p class="muted">Cash retained in <a class="text-link" href="{{ route('cash.show', $sale->cash_session_id) }}">till #{{ $sale->cash_session_id }}</a>.</p>@endif
 <div class="panel-heading"><div><h2>{{ $remaining === 0 ? 'All units returned' : ($returned ? 'Partially returned' : 'No returns recorded') }}</h2><p class="muted">Original receipt stays unchanged. {{ $returned }} units returned · {{ $remaining }} eligible units remaining.</p></div>@can('manage-adjustments')@if($remaining > 0)<a class="btn btn-outline" href="{{ route('refunds.create', $sale) }}">Record a refund →</a>@endif
 @endcan</div>
 <p>Refunded: <strong>{{ \App\Support\Money::format($refundTotal, $sale->currency) }}</strong> · Net retained: <strong>{{ \App\Support\Money::format($sale->total_minor - $refundTotal, $sale->currency) }}</strong></p>

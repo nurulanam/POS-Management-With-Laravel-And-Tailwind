@@ -2,6 +2,9 @@
 @section('title', 'Refund receipt')
 @section('content')
 <div class="page-heading no-print"><div><span class="eyebrow">CASH REFUND RECORDED</span><h1>A separate record. A clear trail.</h1><p>The original sale is unchanged. This document records the returned units and cash refund.</p></div><div class="table-actions"><a class="btn btn-outline" href="{{ route('sales.show', $refund->sale) }}">Original sale</a><a class="btn btn-outline" href="{{ route('refunds.index') }}">Refund ledger</a><button type="button" class="btn btn-primary" data-print-receipt>Print refund receipt</button></div></div>
+@if($refund->cash_session_id && ($refund->user_id === auth()->id() || auth()->user()->can('manage-cash')))
+<div class="info-strip no-print">Cash paid from <a class="text-link" href="{{ route('cash.show', $refund->cash_session_id) }}">till #{{ $refund->cash_session_id }}</a>. The original sale's till is not changed.</div>
+@endif
 <article class="receipt panel">
 <header class="receipt-header"><span class="eyebrow">CASH REFUND RECEIPT</span><h2>{{ $refund->sale->branch_snapshot['name'] }}</h2><p>{{ $refund->sale->branch_snapshot['address'] }}</p><span class="badge badge-warning">Refunded in cash</span></header>
 <dl class="receipt-meta"><div><dt>Refund</dt><dd class="receipt-ref">{{ $refund->reference }}</dd></div><div><dt>Original sale</dt><dd class="receipt-ref">{{ $refund->sale->reference }}</dd></div><div><dt>Processed</dt><dd>{{ $refund->refunded_at->setTimezone($refund->timezone)->format('d M Y H:i:s') }}</dd></div><div><dt>Timezone</dt><dd>{{ $refund->timezone }}</dd></div><div><dt>Authorized by</dt><dd>{{ $refund->staff_name }}</dd></div><div><dt>Customer</dt><dd>{{ $refund->sale->customer_snapshot['name'] ?? 'Walk-in customer' }}</dd></div></dl>
