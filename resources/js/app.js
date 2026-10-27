@@ -11,3 +11,5 @@ import './refunds';
 import './cash';
 
 import './purchasing';
+
+import './transfers';

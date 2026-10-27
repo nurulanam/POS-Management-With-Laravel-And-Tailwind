@@ -26,6 +26,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('manage-business', fn (User $user) => $user->is_active && $user->isAdmin());
         Gate::define('manage-cash', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
         Gate::define('manage-adjustments', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
+        Gate::define('manage-transfers', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
         Gate::define('manage-purchasing', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
         Gate::define('manage-inventory', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
         Gate::define('view-team', fn (User $user) => $user->is_active && in_array($user->role, [UserRole::Admin, UserRole::Manager], true));
