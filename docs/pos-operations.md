@@ -173,6 +173,13 @@ stock adjustments. Purchase orders support partial receiving and closing short,
 with original costs and traceable goods receipts. No supplier payments or cash
 movements are recorded. See [purchasing operations](purchasing.md).
 
+## Stock transfers
+
+Use **Stock transfers** for inter-branch movements. Dispatch deducts source stock;
+only accepted receiving adds destination stock. Partial deliveries, damaged goods,
+and confirmed loss have distinct dispositions. See [stock transfers](stock-transfers.md)
+for permissions, matching SKUs, recovery, and rollout.
+
 ## Setup and operation
 
 1. Back up your database and deploy the code with the existing `.env`/`APP_KEY`.
@@ -180,7 +187,8 @@ movements are recorded. See [purchasing operations](purchasing.md).
    `npm ci && npm run build`; clear/rebuild application caches normally.
 3. Select a branch. As an admin/manager, open **Products & stock** and create
    products with selling prices and opening quantities.
-4. Use **Stock ledger** for deliveries, damage, or count corrections. Enter a
+4. Use **Stock ledger** for audited count corrections; use **Purchasing** for
+   supplier deliveries and **Stock transfers** for inter-branch movements. Enter a
    signed change and a meaningful reason; negative resulting stock is rejected.
 5. Add customer records if desired, or sell to a walk-in.
 6. Open **Point of sale**, search/add products, verify quantities and totals,
@@ -213,6 +221,6 @@ product edits do not alter the receipt. It also applies a discount, checks two
 partial-return previews against server totals, restocks only selected units, and
 prints both receipt types. See the README for safe test setup.
 
-CI also runs the PHP regression suite against MySQL 8.4. The twenty forked concurrency
+CI also runs the PHP regression suite against MySQL 8.4. The twenty-eight forked concurrency
 tests are intentionally skipped in SQLite jobs and executed on MySQL with `pcntl`.
 The MySQL service and its fixed test credentials are ephemeral CI fixtures only.
