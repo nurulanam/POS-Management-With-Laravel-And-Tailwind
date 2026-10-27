@@ -16,7 +16,8 @@ There are no supplier, order, or receipt hard-delete routes.
 
 This phase is **not** accounts payable or inventory accounting. It does not record
 supplier payments/debt, tax credits, freight, landed cost, moving-average cost,
-COGS, profit, supplier returns, or inter-branch transfers. No cash-drawer movement
+COGS, profit, supplier returns, or transfer valuation. Inter-branch quantity movements use the separate
+[stock transfers](stock-transfers.md) workflow. No cash-drawer movement
 is made when ordering or receiving, even in branches with cash tracking enabled.
 No open till is required for purchasing. Selling prices never change on receipt.
 

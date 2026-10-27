@@ -26,7 +26,7 @@ workspace. The old `/pos-preview` route remains a design-only prototype; the new
 This phase does **not** charge payment cards, initiate mobile payments, or connect
 to a payment provider. Cashiers must physically verify cash before confirming.
 It does not implement refund reversal, voids, credit sales, fractional stock,
-product variants, supplier payments, transfers, fiscal-device integrations, or statutory
+product variants, supplier payments, transfer reversals, fiscal-device integrations, or statutory
 tax filing. Printed receipts are application sale records, not a guarantee of
 compliance with any jurisdiction's tax-invoice requirements.
 

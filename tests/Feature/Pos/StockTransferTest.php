@@ -245,4 +245,87 @@ class StockTransferTest extends OperationsTestCase
             $this->fail('Demoted manager must be rejected.');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) { $this->assertDatabaseCount('transfer_receipts', 0); }
     }
+
+    public function test_invalid_last_line_rejects_entire_dispatch_and_receipt(): void
+    {
+        [$source, $destination, $from, $to] = $this->setupRoute();
+        $secondFrom = $this->product($source, ['sku' => 'SECOND', 'stock' => 1]);
+        $secondTo = $this->product($destination, ['sku' => 'SECOND', 'stock' => 0]);
+        $data = $this->dispatchData($source, $destination, $from, $to);
+        $data['items'][] = ['source_product_id' => $secondFrom->id, 'destination_product_id' => $secondTo->id, 'quantity' => 2];
+        $this->post('/transfers', $data)->assertSessionHasErrors('items');
+        $this->assertSame(10, $from->fresh()->stock);
+        $this->assertDatabaseCount('stock_transfers', 0);
+        $data['items'][1]['quantity'] = 1;
+        $this->post('/transfers', $data)->assertRedirect();
+        $transfer = StockTransfer::firstOrFail();
+        $receive = $this->receiptData($destination, $transfer, 2);
+        $receive['items'][] = ['stock_transfer_item_id' => $transfer->items()->where('source_product_id', $secondFrom->id)->firstOrFail()->id,
+            'received_quantity' => 1, 'damaged_quantity' => 1, 'missing_quantity' => 0];
+        $this->withSession(['branch_id' => $destination->id])->post(route('transfers.receive.store', $transfer), $receive)->assertSessionHasErrors('items');
+        $this->assertSame(3, $to->fresh()->stock);
+        $this->assertSame(0, $secondTo->fresh()->stock);
+        $this->assertDatabaseCount('transfer_receipts', 0);
+        $this->assertSame(0, $transfer->fresh()->version);
+    }
+
+    public function test_cross_currency_transfer_changes_quantities_not_prices_or_financial_records(): void
+    {
+        [$source, $destination, $from, $to] = $this->setupRoute();
+        $destination->update(['currency' => 'USD']);
+        $to->update(['price_minor' => 300]);
+        $this->post('/transfers', $this->dispatchData($source, $destination, $from, $to))->assertRedirect();
+        $transfer = StockTransfer::firstOrFail();
+        $this->withSession(['branch_id' => $destination->id])->post(route('transfers.receive.store', $transfer), $this->receiptData($destination, $transfer, 5))->assertRedirect();
+        $this->assertSame(1250, $from->fresh()->price_minor);
+        $this->assertSame(300, $to->fresh()->price_minor);
+        $this->assertSame(8, $to->fresh()->stock);
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('cash_entries', 0);
+        $this->assertDatabaseCount('purchase_orders', 0);
+    }
+
+    public function test_catalog_only_exposes_active_exact_sku_matches_and_detects_branch_switches(): void
+    {
+        [$source, $destination, $from, $to] = $this->setupRoute();
+        $url = '/transfers/catalog?destination_branch_id='.$destination->id.'&branch_id='.$source->id;
+        $this->getJson($url)->assertOk()->assertJsonPath('products.0.target.id', $to->id)
+            ->assertJsonMissingPath('products.0.target.stock')->assertJsonMissingPath('products.0.target.price_minor');
+        $to->update(['is_active' => false]);
+        $this->getJson($url)->assertOk()->assertJsonPath('products.0.target', null);
+        $this->withSession(['branch_id' => $destination->id])->getJson($url)->assertUnprocessable();
+        $this->post('/transfers', $this->dispatchData($source, $destination, $from, $to))->assertSessionHasErrors('branch_id');
+        $this->assertDatabaseCount('stock_transfers', 0);
+    }
+
+    public function test_dispatch_quantity_bounds_and_explicit_confirmation_are_required(): void
+    {
+        [$source, $destination, $from, $to] = $this->setupRoute();
+        foreach ([0, -1, 10001, '1.5'] as $quantity) {
+            $data = $this->dispatchData($source, $destination, $from, $to);
+            $data['items'][0]['quantity'] = $quantity;
+            $this->post('/transfers', $data)->assertSessionHasErrors('items.0.quantity');
+        }
+        $data = $this->dispatchData($source, $destination, $from, $to);
+        unset($data['confirmed']);
+        $this->post('/transfers', $data)->assertSessionHasErrors('confirmed');
+        $data['confirmed'] = 1; $data['items'] = array_fill(0, 101, $data['items'][0]);
+        $this->post('/transfers', $data)->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_revoked_session_is_rejected_by_service_after_branch_locking(): void
+    {
+        [$source, $destination, $from, $to] = $this->setupRoute();
+        $actor = \App\Models\User::firstOrFail();
+        DB::table('users')->where('id', $actor->id)->increment('session_version');
+        try {
+            app(TransferStock::class)->dispatch($source, $actor, $this->dispatchData($source, $destination, $from, $to));
+            $this->fail('Revoked sessions cannot dispatch.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertSame(403, $e->getStatusCode());
+            $this->assertDatabaseCount('stock_transfers', 0);
+        }
+    }
+
 }

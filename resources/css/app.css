@@ -305,3 +305,5 @@
 
 .transfer-dispositions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-top: 20px; }
 @media (max-width: 760px) { .transfer-dispositions { grid-template-columns: 1fr; gap: 0; } #transfer-receive-form .panel-heading { flex-direction: column; } }
+.transfer-document .receipt-items td, .transfer-document .receipt-header h2,
+#transfer-receive-form .return-line { overflow-wrap: anywhere; }
