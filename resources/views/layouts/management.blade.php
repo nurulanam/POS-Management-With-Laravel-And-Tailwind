@@ -24,6 +24,9 @@
                     <a @class(['selected' => request()->routeIs('suppliers.*')]) href="{{ route('suppliers.index') }}"><span aria-hidden="true">♧</span> Suppliers</a>
                     <a @class(['selected' => request()->routeIs('purchases.*', 'purchase-receipts.*')]) href="{{ route('purchases.index') }}"><span aria-hidden="true">▤</span> Purchasing</a>
                 @endcan
+                @can('manage-transfers')
+                    <a @class(['selected' => request()->routeIs('transfers.*')]) href="{{ route('transfers.index') }}"><span aria-hidden="true">⇄</span> Stock transfers</a>
+                @endcan
                 @can('manage-inventory')
                     <a @class(['selected' => request()->routeIs('products.*')]) href="{{ route('products.index') }}"><span aria-hidden="true">▣</span> Products & stock</a>
                 @endcan

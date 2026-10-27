@@ -14,6 +14,7 @@ use App\Http\Controllers\Pos\SaleController;
 use App\Http\Controllers\Pos\RefundController;
 use App\Http\Controllers\Pos\CashSessionController;
 use App\Http\Controllers\Purchasing\{SupplierController, PurchaseOrderController, PurchaseReceiptController};
+use App\Http\Controllers\Inventory\TransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -30,6 +31,16 @@ Route::middleware(['auth', 'active', 'auth.session'])->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::post('/branch/switch', BranchSwitchController::class)->name('branch.switch');
         Route::middleware('operational.branch')->group(function () {
+            Route::middleware('can:manage-transfers')->group(function () {
+                Route::get('/transfers', [TransferController::class, 'index'])->name('transfers.index');
+                Route::get('/transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+                Route::get('/transfers/catalog', [TransferController::class, 'catalog'])->name('transfers.catalog');
+                Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
+                Route::get('/transfers/{stockTransfer}', [TransferController::class, 'show'])->name('transfers.show');
+                Route::get('/transfers/{stockTransfer}/receive', [TransferController::class, 'receiveForm'])->name('transfers.receive');
+                Route::post('/transfers/{stockTransfer}/receive', [TransferController::class, 'receive'])->name('transfers.receive.store');
+                Route::get('/transfer-receipts/{transferReceipt}', [TransferController::class, 'receipt'])->name('transfers.receipt');
+            });
             Route::middleware('can:manage-purchasing')->group(function () {
                 Route::resource('suppliers', SupplierController::class)->except(['show', 'destroy']);
                 Route::get('/purchases', [PurchaseOrderController::class, 'index'])->name('purchases.index');

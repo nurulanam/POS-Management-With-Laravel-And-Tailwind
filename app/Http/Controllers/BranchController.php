@@ -45,6 +45,9 @@ class BranchController extends Controller
             if ($current->is_active && ! $request->boolean('is_active') && $current->cashSessions()->whereNull('closed_at')->exists()) {
                 throw ValidationException::withMessages(['is_active' => 'Close all open tills before deactivating this branch.']);
             }
+            if ($current->is_active && ! $request->boolean('is_active') && \App\Models\StockTransfer::forBranch($current->id)->where('status', 'in_transit')->exists()) {
+                throw ValidationException::withMessages(['is_active' => 'Resolve all in-transit transfers before deactivating this branch.']);
+            }
             if ($current->currency !== $request->input('currency') && ($current->products()->exists() || $current->sales()->exists() || $current->cashSessions()->exists() || $current->purchaseOrders()->exists())) {
                 throw ValidationException::withMessages(['currency' => 'Currency cannot change after products, sales, till sessions, or purchase orders exist. Use a separate branch for another currency.']);
             }
