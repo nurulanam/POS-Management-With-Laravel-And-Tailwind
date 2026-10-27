@@ -180,6 +180,14 @@ only accepted receiving adds destination stock. Partial deliveries, damaged good
 and confirmed loss have distinct dispositions. See [stock transfers](stock-transfers.md)
 for permissions, matching SKUs, recovery, and rollout.
 
+## Reporting
+
+**Reports & analytics** provides manager/admin branch reports and CSV downloads.
+Sales activity uses separate sale and refund processing dates, unlike the sale-date
+cohort in Sales & receipts. Stock movement reports and a current low-stock list are
+available separately. See [reports and exports](reports.md) for metric definitions,
+timezones, privacy, limits, and rollout.
+
 ## Setup and operation
 
 1. Back up your database and deploy the code with the existing `.env`/`APP_KEY`.
@@ -221,6 +229,6 @@ product edits do not alter the receipt. It also applies a discount, checks two
 partial-return previews against server totals, restocks only selected units, and
 prints both receipt types. See the README for safe test setup.
 
-CI also runs the PHP regression suite against MySQL 8.4. The twenty-eight forked concurrency
+CI also runs the PHP regression suite against MySQL 8.4. The twenty-nine forked concurrency
 tests are intentionally skipped in SQLite jobs and executed on MySQL with `pcntl`.
 The MySQL service and its fixed test credentials are ephemeral CI fixtures only.

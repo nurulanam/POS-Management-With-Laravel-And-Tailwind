@@ -15,6 +15,16 @@ class BranchReports
     // Linked records, never operator-editable reason text, determine the category.
     private const MOVEMENT_CASE = "CASE WHEN m.transfer_receipt_id IS NOT NULL THEN 'transfer_in' WHEN m.stock_transfer_id IS NOT NULL THEN 'transfer_out' WHEN m.purchase_receipt_id IS NOT NULL THEN 'purchase' WHEN m.refund_id IS NOT NULL THEN 'return' WHEN m.sale_id IS NOT NULL THEN 'sale' ELSE 'adjustment' END";
 
+    public function snapshot(\Closure $read): mixed
+    {
+        // SET TRANSACTION applies only to the next transaction, not the connection's
+        // session default. Keep multi-query reports coherent even on READ COMMITTED servers.
+        if (DB::getDriverName() === 'mysql' && DB::transactionLevel() === 0) {
+            DB::statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+        }
+        return DB::transaction($read);
+    }
+
     public function sales(Branch $branch, ReportPeriod $period): array
     {
         // Group in SQL by precomputed UTC boundaries: portable across SQLite/MySQL,

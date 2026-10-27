@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\Reporting\{BranchReports, ReportPeriod};
 use App\Support\{Money, ReportCsv};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\{Rule, ValidationException};
 
 class ReportController extends Controller
@@ -17,7 +16,7 @@ class ReportController extends Controller
     {
         $branch = $request->attributes->get('currentBranch');
         $period = ReportPeriod::fromRequest($request, $branch->timezone);
-        $report = DB::transaction(fn () => $reports->sales($branch, $period));
+        $report = $reports->snapshot(fn () => $reports->sales($branch, $period));
         return response()->view('reports.sales', [...$report, 'period' => $period, 'generated' => now('UTC')])->header('Cache-Control', 'private, no-store');
     }
 
@@ -26,7 +25,7 @@ class ReportController extends Controller
         $request->validate(['branch_id' => ['required', 'integer']]);
         $branch = $request->attributes->get('currentBranch');
         $period = ReportPeriod::fromRequest($request, $branch->timezone);
-        $report = DB::transaction(fn () => $reports->sales($branch, $period));
+        $report = $reports->snapshot(fn () => $reports->sales($branch, $period));
         $generated = now('UTC')->toIso8601String();
         $rows = [];
         foreach ($report['rows'] as $date => $row) {
@@ -54,7 +53,7 @@ class ReportController extends Controller
         $branch = $request->attributes->get('currentBranch');
         $period = ReportPeriod::fromRequest($request, $branch->timezone);
         $filters = $this->movementFilters($request, $branch);
-        $data = DB::transaction(function () use ($reports, $branch, $period, $filters) {
+        $data = $reports->snapshot(function () use ($reports, $branch, $period, $filters) {
             $query = $reports->movements($branch, $period, $filters);
             $productCount = (clone $query)->distinct()->count('m.product_id');
             $movements = $reports->movementRows($query)->paginate(50)->withQueryString();
@@ -70,7 +69,7 @@ class ReportController extends Controller
         $branch = $request->attributes->get('currentBranch');
         $period = ReportPeriod::fromRequest($request, $branch->timezone);
         $filters = $this->movementFilters($request, $branch);
-        $data = DB::transaction(fn () => $this->limited($reports->movementRows($reports->movements($branch, $period, $filters))));
+        $data = $reports->snapshot(fn () => $this->limited($reports->movementRows($reports->movements($branch, $period, $filters))));
         $generated = now('UTC')->toIso8601String();
         $rows = $data->map(fn ($m) => [
             $branch->id, ReportCsv::text($branch->name), $branch->timezone, $generated, $m->id,
@@ -86,7 +85,7 @@ class ReportController extends Controller
     public function lowStock(Request $request, BranchReports $reports)
     {
         $branch = $request->attributes->get('currentBranch');
-        $products = DB::transaction(fn () => $reports->lowStock($branch)->paginate(50)->withQueryString());
+        $products = $reports->snapshot(fn () => $reports->lowStock($branch)->paginate(50)->withQueryString());
         return response()->view('reports.low-stock', ['products' => $products, 'generated' => now('UTC')])->header('Cache-Control', 'private, no-store');
     }
 
@@ -94,7 +93,7 @@ class ReportController extends Controller
     {
         $request->validate(['branch_id' => ['required', 'integer']]);
         $branch = $request->attributes->get('currentBranch');
-        $products = DB::transaction(fn () => $this->limited($reports->lowStock($branch)));
+        $products = $reports->snapshot(fn () => $this->limited($reports->lowStock($branch)));
         $generated = now('UTC')->toIso8601String();
         $rows = $products->map(fn ($p) => [$branch->id, ReportCsv::text($branch->name), $generated, $p->id, ReportCsv::text($p->sku), ReportCsv::text($p->name), $p->stock, $p->reorder_level]);
         return ReportCsv::download("low-stock-branch-{$branch->id}.csv", ['branch_id', 'branch_name', 'generated_at_utc', 'product_id', 'current_sku', 'current_product_name', 'current_stock', 'reorder_level'], $rows);
