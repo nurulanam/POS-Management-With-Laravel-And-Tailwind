@@ -219,3 +219,34 @@ test('manager enables tracking, reconciles cash sales and refunds, and reviews a
     await expect(page.locator('#checkout-submit')).toBeDisabled();
     expect(errors).toEqual([]);
 });
+
+test('cashier opens and balances an own-branch till without manager-only controls', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await login(page, 'admin');
+    await page.getByLabel('Active branch').selectOption({ label: 'Uttara Store' });
+    await page.getByRole('button', { name: 'Switch', exact: true }).click();
+    await page.goto('/cash-sessions');
+    await page.getByLabel('I have coordinated the change').check();
+    await page.getByRole('button', { name: 'Enable cash tracking' }).click();
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, 'cashier');
+    await page.getByRole('link', { name: 'Cash drawers', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Opening cash (BDT)', exact: true }).fill('25.00');
+    await page.getByLabel('I counted this opening cash').check();
+    await page.getByRole('button', { name: 'Open till', exact: true }).click();
+    await expect(page).toHaveURL(/\/cash-sessions\/\d+$/);
+    await expect(page.locator('[data-cash-expected]')).toHaveText('BDT 25.00');
+    await expect(page.getByRole('heading', { name: 'Record cash in / out' })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    await page.getByRole('textbox', { name: 'Counted cash (BDT)', exact: true }).fill('25.00');
+    await expect(page.locator('#cash-variance-preview')).toHaveText('Balanced · No variance');
+    await page.getByLabel('Closing note / discrepancy explanation').fill('Balanced after physical recount');
+    await page.getByLabel('I have counted the cash').check();
+    await page.getByRole('button', { name: 'Close till', exact: true }).click();
+    await expect(page.getByText('Closed · Balanced', { exact: true })).toBeVisible();
+    await expect(page.locator('[data-cash-variance]')).toHaveText('BDT 0.00');
+    await expect(page.getByRole('button', { name: 'Record variance review' })).toHaveCount(0);
+    expect(errors).toEqual([]);
+});

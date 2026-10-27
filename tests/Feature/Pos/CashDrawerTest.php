@@ -327,4 +327,119 @@ class CashDrawerTest extends OperationsTestCase
         $this->assertFalse($branch->fresh()->is_active);
     }
 
+
+    public function test_posted_accounting_fields_cannot_override_server_balances_or_actor(): void
+    {
+        [$branch, $session] = $this->setupTill();
+        $this->post(route('cash.movement', $session), [
+            ...$this->movement($branch, $session), 'delta_minor' => 999999, 'balance_minor' => 999999,
+            'user_id' => 999999, 'cash_session_id' => 999999, 'sale_id' => 999999,
+        ])->assertRedirect();
+        $entry = CashEntry::firstOrFail();
+        $this->assertSame(500, $entry->delta_minor);
+        $this->assertSame(10500, $entry->balance_minor);
+        $this->assertSame(auth()->id(), $entry->user_id);
+        $this->assertSame($session->id, $entry->cash_session_id);
+        $this->assertNull($entry->sale_id);
+        $this->post(route('cash.close', $session), [
+            ...$this->closing($branch, $session->fresh(), '104.00'), 'expected_minor' => 10400,
+            'variance_minor' => 0, 'closed_by' => 999999, 'reviewed_by' => 999999,
+        ])->assertRedirect();
+        $this->assertSame(10500, $session->fresh()->expected_minor);
+        $this->assertSame(-100, $session->fresh()->variance_minor);
+        $this->assertSame(auth()->id(), $session->fresh()->closed_by);
+        $this->assertNull($session->fresh()->reviewed_by);
+    }
+
+    public function test_cash_service_rechecks_deactivation_after_the_actor_was_loaded(): void
+    {
+        [$branch, $session] = $this->setupTill();
+        $actor = auth()->user();
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $actor->id)->update(['is_active' => false]);
+        try {
+            app(\App\Services\Pos\CashDrawer::class)->close($branch, $session, $actor, $this->closing($branch, $session));
+            $this->fail('A deactivated actor must not close a till.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        $this->assertNull($session->fresh()->closed_at);
+    }
+
+    public function test_cash_service_rechecks_manager_role_before_a_movement(): void
+    {
+        [$branch, $session] = $this->setupTill(role: UserRole::Manager);
+        $actor = auth()->user();
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $actor->id)->update(['role' => 'cashier']);
+        try {
+            app(\App\Services\Pos\CashDrawer::class)->movement($branch, $session, $actor, $this->movement($branch, $session));
+            $this->fail('A demoted manager must not record cash movements.');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $error) {
+            $this->assertSame('This action is unauthorized.', $error->getMessage());
+        }
+        $this->assertDatabaseCount('cash_entries', 0);
+        $this->assertSame(10000, $session->fresh()->expected_minor);
+    }
+
+    public function test_cash_service_rechecks_branch_access_after_membership_is_removed(): void
+    {
+        [$branch, $session] = $this->setupTill(role: UserRole::Manager);
+        $actor = auth()->user();
+        $actor->branches()->detach($branch);
+        try {
+            app(\App\Services\Pos\CashDrawer::class)->close($branch, $session, $actor, $this->closing($branch, $session));
+            $this->fail('Removed branch access must prevent closing.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        $this->assertNull($session->fresh()->closed_at);
+    }
+
+    public function test_movement_close_and_review_keys_are_bound_to_the_original_actor(): void
+    {
+        [$branch, $session] = $this->setupTill();
+        $movement = $this->movement($branch, $session);
+        $this->post(route('cash.movement', $session), $movement)->assertRedirect();
+        $close = $this->closing($branch, $session->fresh(), '104.00');
+        $this->post(route('cash.close', $session), $close)->assertRedirect();
+        $review = ['branch_id' => $branch->id, 'idempotency_key' => $this->key(), 'note' => 'Investigated shortage', 'confirmed' => 1];
+        $this->post(route('cash.review', $session), $review)->assertRedirect();
+        $before = $session->fresh()->getAttributes();
+        $manager = $this->signIn(UserRole::Manager);
+        $manager->branches()->attach($branch);
+        $this->post(route('cash.movement', $session), $movement)->assertForbidden();
+        $this->post(route('cash.close', $session), $close)->assertForbidden();
+        $this->post(route('cash.review', $session), $review)->assertForbidden();
+        $this->assertSame($before, $session->fresh()->getAttributes());
+        $this->assertDatabaseCount('cash_entries', 1);
+    }
+
+    public function test_closed_tills_reject_new_movements_and_preserve_escaped_snapshots(): void
+    {
+        [$branch, $session] = $this->setupTill();
+        $note = '<script>alert("test")</script> Recounted cash';
+        $this->post(route('cash.close', $session), [...$this->closing($branch, $session), 'reason' => $note])->assertRedirect();
+        $before = $session->fresh()->getAttributes();
+        $this->post(route('cash.movement', $session), $this->movement($branch, $session->fresh()))->assertSessionHasErrors('expected_version');
+        $branch->update(['name' => 'New branch name', 'timezone' => 'UTC']);
+        auth()->user()->update(['name' => 'New staff name']);
+        $this->get(route('cash.show', $session))->assertOk()->assertSee($session->branch_name)
+            ->assertSee($session->owner_name)->assertSee('Asia/Dhaka')->assertSee($note)->assertDontSee($note, false);
+        $this->assertSame($before, $session->fresh()->getAttributes());
+        $this->assertDatabaseCount('cash_entries', 0);
+    }
+
+    public function test_pending_and_reviewed_filters_and_invalid_date_ranges(): void
+    {
+        [$branch, $session] = $this->setupTill();
+        $this->post(route('cash.close', $session), $this->closing($branch, $session, '99.00'))->assertRedirect();
+        $this->get('/cash-sessions?status=pending')->assertOk()->assertViewHas('sessions', fn ($rows) => $rows->total() === 1);
+        $this->get('/cash-sessions?status=reviewed')->assertOk()->assertViewHas('sessions', fn ($rows) => $rows->total() === 0);
+        $this->post(route('cash.review', $session), ['branch_id' => $branch->id, 'idempotency_key' => $this->key(), 'note' => 'Reviewed the difference', 'confirmed' => 1])->assertRedirect();
+        $this->get('/cash-sessions?status=pending')->assertOk()->assertViewHas('sessions', fn ($rows) => $rows->total() === 0);
+        $this->get('/cash-sessions?status=reviewed')->assertOk()->assertViewHas('sessions', fn ($rows) => $rows->total() === 1);
+        $this->get('/cash-sessions?from=2026-10-28&to=2026-10-27')->assertSessionHasErrors('to');
+        $this->get('/cash-sessions?basis=invalid')->assertSessionHasErrors('basis');
+        $this->get('/cash-sessions?status=invalid')->assertSessionHasErrors('status');
+    }
+
 }

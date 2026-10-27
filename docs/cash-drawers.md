@@ -163,3 +163,10 @@ Seven new real MySQL/pcntl races cover competing/duplicate opens, duplicate cash
 movements, competing/duplicate closes, and checkout/refund versus closing. These
 join the six existing checkout/refund races. They intentionally skip on SQLite;
 the MySQL CI job rejects skipped tests.
+
+Pre-PR regression coverage also includes tampered accounting fields, permissions
+revoked after loading an actor, replay attempts by a different manager, escaped
+receipt snapshots, pending/reviewed filters, a cashier's mobile open/close flow,
+and upgrading the cash schema with existing discounted sales, refunds, and stock
+movements. The migration-preservation test runs on both SQLite and MySQL without
+an enclosing test transaction so MySQL DDL commits are exercised correctly.
