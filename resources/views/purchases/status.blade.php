@@ -1,0 +1,1 @@
+<span class="badge {{ in_array($order->status, ['open', 'partial']) ? 'badge-warning' : 'badge-neutral' }}">{{ ['open' => 'Open', 'partial' => 'Partially received', 'received' => 'Fully received', 'closed' => 'Closed short'][$order->status] }}</span>
