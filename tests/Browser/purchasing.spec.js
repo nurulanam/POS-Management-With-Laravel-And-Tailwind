@@ -80,7 +80,7 @@ test('manager creates suppliers, partially receives an order, closes its remaind
     await expect(page.getByText('Fully received', { exact: true })).toBeVisible();
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/products?q=PURCHASE-E2E');
-    await page.getByRole('link', { name: 'Stock ledger', exact: true }).click();
+    await page.getByRole('link', { name: 'Stock ledger ↗', exact: true }).click();
     await expect(page.getByText('5 units on hand')).toBeVisible();
     await expect(page.getByRole('table')).toContainText('Goods received G-');
     await page.goto('/purchase-receipts?q=DELIVERY-E2E');
