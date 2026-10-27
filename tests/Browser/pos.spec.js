@@ -167,7 +167,7 @@ test('manager enables tracking, reconciles cash sales and refunds, and reviews a
     await page.getByRole('link', { name: 'Cash drawers', exact: true }).click();
     await page.getByLabel('I have coordinated the change').check();
     await page.getByRole('button', { name: 'Enable cash tracking' }).click();
-    await page.getByLabel('Opening cash').fill('100.00');
+    await page.getByRole('textbox', { name: 'Opening cash (BDT)', exact: true }).fill('100.00');
     await page.getByLabel('I counted this opening cash').check();
     await page.getByRole('button', { name: 'Open till', exact: true }).click();
     await expect(page).toHaveURL(/\/cash-sessions\/\d+$/);

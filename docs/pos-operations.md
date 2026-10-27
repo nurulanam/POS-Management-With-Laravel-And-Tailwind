@@ -18,9 +18,10 @@ workspace. The old `/pos-preview` route remains a design-only prototype; the new
 - **Returns:** manager/admin partial/full cash refunds with explicit optional restocking.
 - **Receipts:** separate print-friendly original-sale and refund records.
 - **Overview:** today's sales, refunds processed, net activity, and low-stock counts.
-- **Cash drawers:** opt-in per-branch personal tills, physical cash movements, closing
-  counts, and variance reviews. See [cash-drawer operations](cash-drawers.md).
   Cashier visibility follows the original sale's cashier, including refunds.
+- **Cash drawers:** opt-in per-branch personal tills, physical cash movements, closing
+  counts, and variance reviews. Cashiers see only their own tills.
+  See [cash-drawer operations](cash-drawers.md).
 
 This phase does **not** charge payment cards, initiate mobile payments, or connect
 to a payment provider. Cashiers must physically verify cash before confirming.
@@ -66,8 +67,8 @@ product/customer/sale deletion endpoints.
   and the cart carries its quoted tax rate; stale quotes are rejected for review.
   A failed checkout can restore the cart with current prices, which must be
   reviewed before submitting again.
-- Currency cannot change once a branch has products or sales, even archived
-  products, or once any till session exists. This avoids reinterpreting stored amounts in another currency.
+- Currency cannot change once a branch has products (including archived ones),
+  sales, or any till session. This avoids reinterpreting stored amounts in another currency.
   Use a separate branch for a different currency until a deliberate conversion
   workflow is implemented.
 - A sale is limited to 100 distinct products, 10,000 units per line, a subtotal
