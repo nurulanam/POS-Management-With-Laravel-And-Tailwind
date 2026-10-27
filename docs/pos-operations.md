@@ -19,6 +19,9 @@ workspace. The old `/pos-preview` route remains a design-only prototype; the new
 - **Receipts:** separate print-friendly original-sale and refund records.
 - **Overview:** today's sales, refunds processed, net activity, and low-stock counts.
   Cashier visibility follows the original sale's cashier, including refunds.
+- **Cash drawers:** opt-in per-branch personal tills, physical cash movements, closing
+  counts, and variance reviews. Cashiers see only their own tills.
+  See [cash-drawer operations](cash-drawers.md).
 
 This phase does **not** charge payment cards, initiate mobile payments, or connect
 to a payment provider. Cashiers must physically verify cash before confirming.
@@ -64,8 +67,8 @@ product/customer/sale deletion endpoints.
   and the cart carries its quoted tax rate; stale quotes are rejected for review.
   A failed checkout can restore the cart with current prices, which must be
   reviewed before submitting again.
-- Currency cannot change once a branch has products or sales, even archived
-  products. This avoids reinterpreting stored amounts in another currency.
+- Currency cannot change once a branch has products (including archived ones),
+  sales, or any till session. This avoids reinterpreting stored amounts in another currency.
   Use a separate branch for a different currency until a deliberate conversion
   workflow is implemented.
 - A sale is limited to 100 distinct products, 10,000 units per line, a subtotal
@@ -184,6 +187,8 @@ Do not run migration rollback against live sales without a verified backup and
 recovery plan: rolling back the adjustments migration deletes refund records and
 discount snapshots; rolling back the earlier operations migration removes sales
 and inventory tables. Neither is a safe way to undo a transaction.
+The cash-drawer migration also removes reconciliation history and associations on
+rollback. Enable tracking explicitly after deployment; see [rollout instructions](cash-drawers.md).
 No demonstration products/customers/sales are seeded into production.
 
 ## Verification
@@ -201,6 +206,6 @@ product edits do not alter the receipt. It also applies a discount, checks two
 partial-return previews against server totals, restocks only selected units, and
 prints both receipt types. See the README for safe test setup.
 
-CI also runs the PHP regression suite against MySQL 8.4. The six forked concurrency
+CI also runs the PHP regression suite against MySQL 8.4. The thirteen forked concurrency
 tests are intentionally skipped in SQLite jobs and executed on MySQL with `pcntl`.
 The MySQL service and its fixed test credentials are ephemeral CI fixtures only.

@@ -12,6 +12,7 @@ use App\Http\Controllers\Pos\CustomerController;
 use App\Http\Controllers\Pos\CheckoutController;
 use App\Http\Controllers\Pos\SaleController;
 use App\Http\Controllers\Pos\RefundController;
+use App\Http\Controllers\Pos\CashSessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -28,6 +29,13 @@ Route::middleware(['auth', 'active', 'auth.session'])->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::post('/branch/switch', BranchSwitchController::class)->name('branch.switch');
         Route::middleware('operational.branch')->group(function () {
+            Route::get('/cash-sessions', [CashSessionController::class, 'index'])->name('cash.index');
+            Route::post('/cash-sessions/enable', [CashSessionController::class, 'enable'])->middleware('can:manage-cash')->name('cash.enable');
+            Route::post('/cash-sessions', [CashSessionController::class, 'store'])->name('cash.store');
+            Route::get('/cash-sessions/{cashSession}', [CashSessionController::class, 'show'])->name('cash.show');
+            Route::post('/cash-sessions/{cashSession}/movements', [CashSessionController::class, 'movement'])->middleware('can:manage-cash')->name('cash.movement');
+            Route::post('/cash-sessions/{cashSession}/close', [CashSessionController::class, 'close'])->name('cash.close');
+            Route::post('/cash-sessions/{cashSession}/review', [CashSessionController::class, 'review'])->middleware('can:manage-cash')->name('cash.review');
             Route::get('/pos', [CheckoutController::class, 'index'])->name('pos.index');
             Route::get('/pos/catalog', [CheckoutController::class, 'catalog'])->name('pos.catalog');
             Route::post('/pos/checkout', [CheckoutController::class, 'store'])->name('pos.store');

@@ -7,3 +7,5 @@ import 'owl.carousel';
 import './pos';
 
 import './refunds';
+
+import './cash';

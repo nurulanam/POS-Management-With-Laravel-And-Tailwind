@@ -284,3 +284,10 @@
     .stat-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
     .stat-card > strong { overflow-wrap: anywhere; }
 }
+
+.cash-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: 24px; align-items: start; }
+.cash-operation { max-width: 650px; }
+.cash-note { white-space: pre-line; overflow-wrap: anywhere; }
+.cash-note p { margin: 8px 0 15px; font-size: 12px; }
+.cash-reconciliation .grand-total { flex-wrap: wrap; }
+@media (max-width: 760px) { .cash-reconciliation .receipt-meta > div { flex-wrap: wrap; } }

@@ -1,6 +1,7 @@
 @extends('layouts.management')
 @section('title', 'Record cash refund')
 @section('content')
+@include('cash.payment-context')
 <a class="back-link" href="{{ route('sales.show', $sale) }}">← Original sale receipt</a>
 <div class="page-heading"><div><span class="eyebrow">CONTROLLED RETURNS · {{ $sale->reference }}</span><h1>Make it right. Keep the record.</h1><p>Refund original amounts after discounts and tax. Inspect returned items before marking them for restocking.</p></div><span class="badge badge-warning">Manager / admin only</span></div>
 @if(collect($lines)->sum(fn ($line) => $line['sold'] - $line['returned']) === 0)
@@ -9,6 +10,7 @@
 <noscript><div class="notice">Enable JavaScript to review the refund amount and submit this form. The server always calculates the final amount.</div></noscript>
 <form id="refund-form" class="form-layout" method="POST" action="{{ route('refunds.store', $sale) }}" data-config="{{ json_encode($config) }}">
 @csrf
+<input type="hidden" name="cash_session_id" value="{{ $cashSession?->id ?? 0 }}">
 <input type="hidden" name="branch_id" value="{{ $currentBranch->id }}"><input type="hidden" name="idempotency_key" value="{{ $refundKey }}">
 <div class="form-main"><section class="panel"><div class="panel-heading"><div><h2>Select returned units</h2><p class="muted">Partial returns are supported. A full return uses all remaining units.</p></div><button id="refund-select-all" class="btn btn-outline btn-small" type="button">Return all remaining units</button></div>
 @foreach($lines as $line)

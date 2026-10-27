@@ -21,14 +21,16 @@ class CheckoutController extends Controller
 
             return [...$product->only(['id', 'name', 'sku', 'price_minor', 'stock']), 'quantity' => min(10000, max(1, (int) $item['quantity']))];
         })->values();
+        $cashSession = $branch->cashSessions()->where('active_owner_id', $request->user()->id)->first();
         $config = [
+            'cashSessionRequired' => $branch->cash_tracking_enabled, 'cashSessionId' => $cashSession?->id,
             'currency' => $branch->currency, 'precision' => Money::precision($branch->currency),
             'taxBasisPoints' => Money::basisPoints($branch->tax_rate), 'branchId' => $branch->id,
             'catalogUrl' => route('pos.catalog', [], false), 'cart' => $cart,
         ];
 
         return view('pos.checkout', [
-            'config' => $config, 'customers' => $branch->customers()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'phone']),
+            'cashSession' => $cashSession, 'config' => $config, 'customers' => $branch->customers()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'phone']),
             'checkoutKey' => (string) Str::uuid(),
         ]);
     }
@@ -46,6 +48,7 @@ class CheckoutController extends Controller
     public function store(Request $request, Checkout $checkout)
     {
         $data = $request->validate([
+            'cash_session_id' => ['nullable', 'integer', 'min:0'],
             'discount_type' => ['nullable', Rule::in(['none', 'fixed', 'percent'])],
             'discount_value' => [Rule::requiredIf(in_array($request->input('discount_type'), ['fixed', 'percent'], true)), 'nullable', 'string', 'max:20'],
             'discount_reason' => [Rule::requiredIf(in_array($request->input('discount_type'), ['fixed', 'percent'], true)), 'nullable', 'string', 'min:3', 'max:500'],

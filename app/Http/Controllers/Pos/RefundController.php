@@ -34,16 +34,19 @@ class RefundController extends Controller
     public function create(Request $request, Sale $sale, ReturnQuote $quote)
     {
         $sale = $request->attributes->get('currentBranch')->sales()->findOrFail($sale->id);
+        $branch = $request->attributes->get('currentBranch');
+        $cashSession = $branch->cashSessions()->where('active_owner_id', $request->user()->id)->first();
         $lines = $quote->lines($sale);
-        $config = ['lines' => array_values($lines), 'currency' => $sale->currency, 'precision' => Money::precision($sale->currency)];
+        $config = ['cashSessionRequired' => $branch->cash_tracking_enabled, 'cashSessionId' => $cashSession?->id, 'lines' => array_values($lines), 'currency' => $sale->currency, 'precision' => Money::precision($sale->currency)];
 
-        return view('refunds.create', ['sale' => $sale, 'lines' => $lines, 'config' => $config, 'refundKey' => (string) Str::uuid()]);
+        return view('refunds.create', ['cashSession' => $cashSession, 'sale' => $sale, 'lines' => $lines, 'config' => $config, 'refundKey' => (string) Str::uuid()]);
     }
 
     public function store(Request $request, Sale $sale, RefundSale $service)
     {
         abort_unless($sale->branch_id === $request->attributes->get('currentBranch')->id, 404);
         $data = $request->validate([
+            'cash_session_id' => ['nullable', 'integer', 'min:0'],
             'idempotency_key' => ['required', 'uuid'], 'reason' => ['required', 'string', 'min:3', 'max:500'],
             'confirmed' => ['required', 'accepted'], 'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.sale_item_id' => ['required', 'integer', 'distinct'],
