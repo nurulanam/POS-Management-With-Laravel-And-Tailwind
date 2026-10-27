@@ -15,6 +15,7 @@ use App\Http\Controllers\Pos\RefundController;
 use App\Http\Controllers\Pos\CashSessionController;
 use App\Http\Controllers\Purchasing\{SupplierController, PurchaseOrderController, PurchaseReceiptController};
 use App\Http\Controllers\Inventory\TransferController;
+use App\Http\Controllers\Reporting\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -31,6 +32,14 @@ Route::middleware(['auth', 'active', 'auth.session'])->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::post('/branch/switch', BranchSwitchController::class)->name('branch.switch');
         Route::middleware('operational.branch')->group(function () {
+            Route::middleware('can:view-reports')->group(function () {
+                Route::get('/reports', [ReportController::class, 'sales'])->name('reports.sales');
+                Route::get('/reports/sales.csv', [ReportController::class, 'salesCsv'])->middleware('throttle:10,1')->name('reports.sales.csv');
+                Route::get('/reports/inventory', [ReportController::class, 'inventory'])->name('reports.inventory');
+                Route::get('/reports/inventory.csv', [ReportController::class, 'inventoryCsv'])->middleware('throttle:10,1')->name('reports.inventory.csv');
+                Route::get('/reports/low-stock', [ReportController::class, 'lowStock'])->name('reports.low-stock');
+                Route::get('/reports/low-stock.csv', [ReportController::class, 'lowStockCsv'])->middleware('throttle:10,1')->name('reports.low-stock.csv');
+            });
             Route::middleware('can:manage-transfers')->group(function () {
                 Route::get('/transfers', [TransferController::class, 'index'])->name('transfers.index');
                 Route::get('/transfers/create', [TransferController::class, 'create'])->name('transfers.create');

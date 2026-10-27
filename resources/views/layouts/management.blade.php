@@ -20,6 +20,9 @@
                 <a @class(['selected' => request()->routeIs('refunds.*')]) href="{{ route('refunds.index') }}"><span aria-hidden="true">↶</span> Refunds & returns</a>
                 <a href="{{ route('cash.index') }}" @class(['selected' => request()->routeIs('cash.*')])><span aria-hidden="true">▣</span> Cash drawers</a>
                 <a @class(['selected' => request()->routeIs('customers.*')]) href="{{ route('customers.index') }}"><span aria-hidden="true">♧</span> Customers</a>
+                @can('view-reports')
+                    <a @class(['selected' => request()->routeIs('reports.*')]) href="{{ route('reports.sales') }}"><span aria-hidden="true">▥</span> Reports &amp; analytics</a>
+                @endcan
                 @can('manage-purchasing')
                     <a @class(['selected' => request()->routeIs('suppliers.*')]) href="{{ route('suppliers.index') }}"><span aria-hidden="true">♧</span> Suppliers</a>
                     <a @class(['selected' => request()->routeIs('purchases.*', 'purchase-receipts.*')]) href="{{ route('purchases.index') }}"><span aria-hidden="true">▤</span> Purchasing</a>
